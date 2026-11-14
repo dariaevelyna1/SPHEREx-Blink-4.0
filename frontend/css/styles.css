@@ -1544,3 +1544,13 @@ html[data-theme] .site-footer { border-top: 1px solid var(--border); background:
 .mr-words dd { margin: 2px 0 0; color: var(--text-muted); }
 .mission-runner { font-size: .95rem; line-height: 1.5; }
 .mr-head h2 { font-size: 1.2rem; }
+/* the mode menu must fit on one line down to 64rem (then it folds into the Menu button): drop the chip and shorten the switch */
+@media (max-width: 90rem) and (min-width: 75.01rem) {
+  .mode-chip { display: none; }
+  .mode-switch-link .msl-long { display: none; }
+  #project-menu #project-nav { gap: clamp(2px, .5vw, 10px); }
+  #project-menu #project-nav a { font-size: .84rem; padding: 0 3px; }
+  header.site-header { gap: 14px; }
+  #project-menu.project-menu { gap: 8px; }
+  #project-menu select { max-width: 9.5rem; }
+}

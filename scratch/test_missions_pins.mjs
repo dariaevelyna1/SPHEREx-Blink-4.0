@@ -33,7 +33,7 @@ check("real-data-only missions are not picked on the demo", [...Array(500)].ever
 check("random pick avoids recent ones", pickRandomMission(() => 0, [missionsDatabase[0].id]).id === missionsDatabase[1].id);
 check("random pick falls back when all avoided", Boolean(pickRandomMission(Math.random, missionsDatabase.map((m) => m.id))));
 const seen = new Set(); for (let i = 0; i < 2000; i++) seen.add(pickRandomMission().id);
-check("Math.random reaches every mission", seen.size === missionsDatabase.length);
+check("Math.random reaches every mission the demo can run (real-data-only ones are skipped on purpose)", seen.size === missionsDatabase.filter((m) => !m.needsReal).length);
 const barn = missionsDatabase.find((m) => m.id === "proper-barnard");
 check("mission href keeps the backend and names the mission", missionHref(barn, "?data=api&api=http://localhost:8003&ra=1") === "index.html?data=api&api=http%3A%2F%2Flocalhost%3A8003&ra=269.4462&dec=4.769&fov=5&det=D2&mission=proper-barnard");
 const st = mem(); let pr = loadProgress(st);

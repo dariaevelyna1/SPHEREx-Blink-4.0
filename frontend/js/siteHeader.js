@@ -60,7 +60,7 @@ if (showMode) {
   const sw = document.createElement("a");
   sw.className = "mode-switch-link";
   sw.href = MODES[other].home;
-  sw.textContent = `⇄ Switch to ${MODES[other].label.replace(/^\S+ /, "")}`;
+  sw.innerHTML = `⇄ <span class="msl-long">Switch to </span>${MODES[other].label.replace(/^\S+ /, "")}`;
   sw.addEventListener("click", () => saveMode(other));
   nav.append(sw);
 }
@@ -117,7 +117,7 @@ header.addEventListener("keydown", event => {
     toggle.focus();
   }
 });
-matchMedia("(max-width: 90rem)").addEventListener("change", () => setOpen(false));
+matchMedia("(max-width: 75rem)").addEventListener("change", () => setOpen(false));
 setupThemeSwitcher(theme);
 addEventListener("storage", event => {
   if (event.key !== STORAGE_KEY && event.key !== null) return;
