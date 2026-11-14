@@ -251,3 +251,9 @@ and 3.0's whole page layout, HTML and CSS (not allowed to be copied).
 | 6 | Local-impact claims (schools, partners, curriculum) | slide 6, pitch | only verified names, with consent | nobody named |
 | 7 | Push and deploy | publication | a fresh yes per push | nothing pushed |
 | 8 | Region, bucket, prefix, readers, approved sequences | `docs/DEPLOY_FULL.md` | the values | placeholders, empty allow-list |
+
+## Public demo on GitHub Pages (2026-11-14, after P8, on the author's request)
+
+- The author pushed `main` (4408e7c) with a fresh yes after accepting the collaborator invitation; the author then asked that the site work for
+  anyone opening it from GitHub. Added `.github/workflows/pages.yml`: Node tests (Node 22) then publish `frontend/` with GitHub Pages.
+  Demo URL: https://mateibut.github.io/SPHEREx-Blink-4.0/ (synthetic `edu` bundle only; no backend, no cloud).

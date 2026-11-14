@@ -7,6 +7,8 @@ story with a "hunt the mover" game). NASA Space Apps Challenge 2026, Cluj-Napoca
 > pixel is in this repository. A candidate is a lead, never a discovery. The 2.0/3.0 line of this project was started on 2026-11-05, before the
 > hackathon weekend; this repository was started from an empty folder on 2026-11-14 and reuses a few scientific modules from 3.0 (see `CREDITS.md`).
 
+**Live demo (synthetic data, no login):** https://mateibut.github.io/SPHEREx-Blink-4.0/ (published by `.github/workflows/pages.yml` from `frontend/`).
+
 Status (2026-11-14): parts P0-P8 done. The public demo is the static `edu` bundle (synthetic). The real-data backend (`full` profile) is built
 and tested with fakes only; its container passes our smoke test locally; **nothing is deployed**. `WORKLOG.md` says what was tested and what remains.
 

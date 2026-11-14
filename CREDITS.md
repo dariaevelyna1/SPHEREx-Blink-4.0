@@ -48,6 +48,7 @@ None shipped. The interface uses system fonts and shapes drawn with CSS or on a 
 | Astropy | 8.0.2 | BSD-3-Clause | FITS and WCS in scientific processing (offline). Cite as its authors ask: https://www.astropy.org/acknowledging.html |
 | google-cloud-storage | 3.17.1 | Apache-2.0 | The Google Cloud Storage store of the `full` profile |
 | pytest | 9.2.0 | MIT | Tests only |
+| GitHub Actions `actions/checkout` v4, `actions/setup-node` v4, `actions/configure-pages` v5, `actions/upload-pages-artifact` v3, `actions/deploy-pages` v4 | major tags | MIT **[unverified: from memory, licence files not opened]** | `.github/workflows/pages.yml`: tests, then publishes `frontend/` on GitHub Pages; not part of the site |
 | Python container image `python:3.12.10-slim` | 3.12.10 | Python: PSF-2.0; the image also holds Debian packages under their own licences **[unverified: per-package licences not read]** | Base of the serving `Dockerfile` (not in the repository; pulled at build time) |
 | Dependencies installed with google-cloud-storage (google-api-core 2.44.0, google-auth 2.62.2, google-cloud-core 2.8.0, google-crc32c 1.9.0, google-resumable-media 2.11.0, googleapis-common-protos 1.76.0, proto-plus 1.29.0, protobuf 7.36.2, requests 2.34.2) | as listed | **[unverified: licences not read from the metadata]** | Not imported by our code directly |
 | httpx | 0.28.1 | BSD-3-Clause | Tests only (the test client) |
