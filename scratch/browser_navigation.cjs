@@ -25,7 +25,7 @@ async function checkNavigation() {
     // Changed on purpose (14 Nov 2026): the menu shows the chosen mode's pages. In Science Mode: Home, its pages and a switch to Learn Mode;
     // the home page itself shows only "Home" (checked after the loop).
     const destinations = [
-      ["Workspace", "index.html#workspace"], ["Sky Explorer", "sky.html"],
+      ["Sky Explorer", "sky.html"], ["Workspace", "index.html#workspace"],   // leave the workspace first: its own link is a same-page jump
       ["Simulator", "simulator.html"], ["Planet X Lab", "planet-x.html"], ["Results", "results.html"], ["About", "index.html#about"]
     ];
     const labels = ["Home", "Workspace", "📌 Pin Board", "Sky Explorer", "Simulator", "Planet X Lab", "Results", "About", "⇄ Switch to Learn Mode"];
