@@ -1,6 +1,9 @@
-# Publish the public demo: the static frontend/ folder (synthetic edu bundle, no server, no login, no cloud) on GitHub Pages.
-# Runs the Node tests and the prepush check first; nothing is published if they fail. The real-data backend is never deployed by this.
-name: Pages
+# Publishes ONLY the static frontend (folder `frontend/`) as a GitHub Pages demo.
+# The demo runs on synthetic mock data (the page says so in its header badge); no backend, no data files.
+#
+# One-time setup on GitHub: Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
+# Until then the configuration check passes and the deploy job is skipped.
+name: Deploy demo to GitHub Pages
 
 on:
   push:
@@ -17,17 +20,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  pages-configuration:
+    name: Check Pages configuration
     runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.pages.outputs.enabled }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-      - run: node scripts/run_tests.mjs
+      - id: pages
+        name: Check whether Pages is enabled
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          enabled=$(curl --fail --silent --show-error --retry 3 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY" | jq -r '.has_pages')
+          if [[ "$enabled" != "true" && "$enabled" != "false" ]]; then
+            echo "Could not determine GitHub Pages state" >&2
+            exit 1
+          fi
+          echo "enabled=$enabled" >> "$GITHUB_OUTPUT"
+          if [[ "$enabled" == "false" ]]; then
+            echo "Pages is disabled. Enable GitHub Actions as the Pages source in repository Settings to publish the demo." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   deploy:
-    needs: test
+    needs: pages-configuration
+    if: needs.pages-configuration.outputs.enabled == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
