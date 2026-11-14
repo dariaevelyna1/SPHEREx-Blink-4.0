@@ -4,30 +4,78 @@ const header = document.querySelector(".site-header");
 const current = header.dataset.page;
 const brand = header.querySelector(".site-brand");
 if (brand?.textContent.trim() === "SPHEREx Blink") brand.textContent = "SPHEREx Blink 4.0";
-const pages = [
-  ["overview", "Home", "overview.html"],
-  ["index", "Science Mode", "index.html#workspace"],
-  ["learn", "Learn Mode", "learn.html"],
-  ["sky", "Sky Explorer", "sky.html"],
-  ["simulator", "Simulator", "simulator.html"],
-  ["planet-x", "Planet X Lab", "planet-x.html"],
-  ["results", "Results", "results.html"],
-  ["about", "About", "index.html#about"],
-];
+// Two modes: the visitor chooses one on the home page and the menu then shows only that mode's pages, with a switch to the other.
+const MODE_KEY = "spherex-blink-mode";
+const readMode = () => { try { return localStorage.getItem(MODE_KEY); } catch { return null; } };
+const saveMode = (m) => { try { localStorage.setItem(MODE_KEY, m); } catch {} };
+const params = new URLSearchParams(location.search);
+let mode = readMode();
+if (current === "learn" || params.has("mission")) mode = "learn";
+else if (["sky", "simulator", "planet-x", "results"].includes(current)) mode = "science";
+else if (current === "index" && !mode) mode = "science";
+if (mode && current !== "overview") saveMode(mode);
+document.documentElement.dataset.mode = mode ?? "none";
+
+const PRACTICE = "index.html?ra=269.4462&dec=4.769&fov=5&det=D2#workspace";
+const MODES = {
+  learn: { label: "🎓 Learn Mode", home: "learn.html", pages: [
+    ["learn", "🚀 Missions", "learn.html#missions"],
+    ["lessons", "📖 Lessons", "learn.html#lesson-panel"],
+    ["astra", "🤖 Astra guide", "learn.html#astra"],
+    ["profile", "👤 My progress", "learn.html#learner-profile"],
+    ["index", "🧪 Practice lab", PRACTICE],
+  ] },
+  science: { label: "🔬 Science Mode", home: "index.html#workspace", pages: [
+    ["index", "Workspace", "index.html#workspace"],
+    ["pins", "📌 Pin Board", "index.html#pin-board"],
+    ["sky", "Sky Explorer", "sky.html"],
+    ["simulator", "Simulator", "simulator.html"],
+    ["planet-x", "Planet X Lab", "planet-x.html"],
+    ["results", "Results", "results.html"],
+    ["about", "About", "index.html#about"],
+  ] },
+};
+const pages = [["overview", "Home", "overview.html"], ...(mode ? MODES[mode].pages : [])];
 
 const nav = document.createElement("nav");
 nav.id = "project-nav";
-nav.setAttribute("aria-label", "Project pages");
+nav.setAttribute("aria-label", mode ? `${MODES[mode].label} pages` : "Project pages");
+if (mode) {
+  const chip = document.createElement("span");
+  chip.className = `mode-chip mode-chip-${mode}`;
+  chip.textContent = MODES[mode].label;
+  nav.append(chip);
+}
 for (const [id, label, url] of pages) {
   const link = document.createElement("a");
   link.textContent = label;
-  link.href = current === "index" && (id === "index" || id === "about") ? url.slice(url.indexOf("#")) : url;
+  const samePage = (current === "index" && url.startsWith("index.html#")) || (current === "learn" && url.startsWith("learn.html#"));
+  link.href = samePage ? url.slice(url.indexOf("#")) : url;
   link.dataset.page = id;
   nav.append(link);
 }
+if (mode) {
+  const other = mode === "learn" ? "science" : "learn";
+  const sw = document.createElement("a");
+  sw.className = "mode-switch-link";
+  sw.href = MODES[other].home;
+  sw.textContent = `⇄ Switch to ${MODES[other].label.replace(/^\S+ /, "")}`;
+  sw.addEventListener("click", () => saveMode(other));
+  nav.append(sw);
+}
+// the home page's mode cards and buttons choose the mode
+for (const a of document.querySelectorAll("a[href]")) {
+  const h = a.getAttribute("href");
+  if (a.closest("#project-nav")) continue;
+  if (/^learn\.html/.test(h)) a.addEventListener("click", () => saveMode("learn"));
+  else if (/^index\.html/.test(h) && current === "overview") a.addEventListener("click", () => saveMode("science"));
+}
 function indicatePage() {
-  const active = current === "index" && location.hash === "#about" ? "about" : current;
-  for (const link of nav.children) {
+  const hash = location.hash;
+  let active = current;
+  if (current === "index") active = hash === "#about" ? "about" : hash === "#pin-board" ? "pins" : "index";
+  if (current === "learn") active = hash === "#lesson-panel" ? "lessons" : hash === "#astra" ? "astra" : hash === "#learner-profile" ? "profile" : "learn";
+  for (const link of nav.querySelectorAll("a[data-page]")) {
     if (link.dataset.page === active) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
   }

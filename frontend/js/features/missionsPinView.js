@@ -1,6 +1,6 @@
 // missionsPinView.js – the DOM part of missions.js (the mission card) and pinBoard.js (the pin board with its sky map and the observer-name dialog).
 
-import { missionsDatabase, pickRandomMission, missionHref, loadProgress, saveProgress, markComplete, noteShown } from "./missions.js";
+import { missionWhy, missionsDatabase, pickRandomMission, missionHref, loadProgress, saveProgress, markComplete, noteShown } from "./missions.js";
 import { makePin, pinTag, loadPins, savePins, addPin, removePin, skyToMap, verifyPin, eclipticPoints, fieldOffsetArcmin, initials, timeAgo, decorativeStars } from "./pinBoard.js";
 import { formatRA, formatDec } from "../coords.js";
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -46,6 +46,7 @@ export function setupMissions() {
     $("mission-category").textContent = `${m.category} · level ${m.tier} · ${m.steps.length} steps`;
     $("mission-title").textContent = (done ? "✓ " : "") + m.title;
     $("mission-story").textContent = m.story;
+    $("mission-why").textContent = missionWhy(m);
     const ol = $("mission-steps-preview");
     ol.textContent = "";
     for (const s of m.steps) { const li = document.createElement("li"); li.textContent = s.does; ol.appendChild(li); }

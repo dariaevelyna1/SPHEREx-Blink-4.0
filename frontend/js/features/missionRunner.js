@@ -2,7 +2,7 @@
 // highlights the control to use, ticks each step when the learner really does it, explains what just happened, asks for measurements
 // read off the page, and awards XP. DOM only; the missions and the checks are pure, in missions.js.
 
-import { findMission, stepMatches, checkMeasurement, STEP_NOTES, xpFor, totalXp, rankFor,
+import { findMission, stepMatches, checkMeasurement, STEP_NOTES, missionWhy, stepWhy, xpFor, totalXp, rankFor,
   loadProgress, saveProgress, markComplete, pickRandomMission, missionHref } from "./missions.js";
 
 const store = (() => { try { return window.localStorage; } catch { return null; } })();
@@ -17,7 +17,7 @@ export function startMissionRunner({ getCandidate = () => null, getCount = () =>
   const mission = id && findMission(id);
   if (!mission) return null;
 
-  let step = 0, marked = null, note = "", wrong = "", collapsed = false;
+  let step = 0, marked = null, note = "", wrong = "", collapsed = false, started = false;
   const box = document.createElement("aside");
   box.className = "mission-runner";
   box.setAttribute("aria-label", "Mission console");
@@ -28,7 +28,7 @@ export function startMissionRunner({ getCandidate = () => null, getCount = () =>
     marked?.classList.remove("mission-target");
     marked = null;
     const s = current();
-    if (!s?.check.on) return;
+    if (!started || !s?.check.on) return;
     const el = [...document.querySelectorAll(s.check.on)].find(visible);
     const target = el?.matches("input[type=radio], input[type=checkbox]") ? el.closest("label") ?? el : el;
     if (target) { target.classList.add("mission-target"); marked = target; }
@@ -53,9 +53,15 @@ export function startMissionRunner({ getCandidate = () => null, getCount = () =>
       </header>
       <div class="mr-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${n}" aria-valuenow="${Math.min(step, n)}" aria-label="Steps done"><span style="width:${(100 * Math.min(step, n) / n).toFixed(0)}%"></span></div>
       <div class="mr-body">
-      ${step === 0 ? `<p class="mr-story">${esc(mission.story)}</p>` : ""}
+      ${!started ? `<p class="mr-section">📜 Mission briefing</p><p class="mr-story">${esc(mission.story)}</p>
+        <p class="mr-section">🔭 Why it matters</p><p class="mr-why-text">${esc(missionWhy(mission))}</p>
+        <p class="mr-section">🧭 What you will do · ${n} steps</p>
+        <ol class="mr-steps mr-steps-preview">${mission.steps.map((x, i) => `<li><span class="mr-dot" aria-hidden="true">${i + 1}</span><span>${esc(x.does)}</span></li>`).join("")}</ol>
+        <p class="mr-actions"><button type="button" class="btn btn-small btn-primary" data-act="start">🚀 Start the mission</button> <button type="button" class="btn btn-small" data-act="quit">Not now</button></p>
+      </div>` : `
       ${note ? `<p class="mr-note" role="status"><strong>What just happened:</strong> ${esc(note)}</p>` : ""}
       <ol class="mr-steps">${items}</ol>
+      ${!done && stepWhy(s) ? `<p class="mr-why"><strong>Why this step?</strong> ${esc(stepWhy(s))}</p>` : ""}
       ${m ? `<form class="mr-measure" data-act="measure"><label for="mr-input">${esc(s.does)}</label>
           <div class="mr-measure-row"><input id="mr-input" autocomplete="off" inputmode="${m.field === "compass" ? "text" : "decimal"}" placeholder="${m.unit ? "value in " + esc(m.unit) : "your answer"}">
           <button type="submit" class="btn btn-small btn-primary">Check</button></div>
@@ -66,7 +72,7 @@ export function startMissionRunner({ getCandidate = () => null, getCount = () =>
         <a class="btn btn-small" href="learn.html#missions">Back to Learn Mode</a></p>`
       : `<p class="mr-actions">${s?.check.on ? `<button type="button" class="btn btn-small" data-act="show">📍 Show me where</button>` : ""}
           <button type="button" class="btn btn-small" data-act="quit">Quit</button></p>`}
-      </div>`;
+      </div>`}`;
     highlight();
   }
 
@@ -86,11 +92,12 @@ export function startMissionRunner({ getCandidate = () => null, getCount = () =>
 
   function noteFor(s) { return s.learn ?? STEP_NOTES[s.check.on] ?? ""; }
   function onEvent(e) {
-    if (box.contains(e.target)) return;
+    if (!started || box.contains(e.target)) return;
     const s = current();
     if (s && stepMatches(s.check, e.target)) setTimeout(() => advance(noteFor(s)), 0);   // let the page react first
   }
   function poll() {
+    if (!started) return;
     const s = current();
     if (s?.check.see && [...document.querySelectorAll(s.check.see)].some(visible)) advance("");
     else if (s?.check.on && !marked) highlight();                       // the control may appear later
@@ -116,6 +123,7 @@ export function startMissionRunner({ getCandidate = () => null, getCount = () =>
       clearInterval(timer); marked?.classList.remove("mission-target"); box.remove();
       const u = new URL(location.href); u.searchParams.delete("mission"); history.replaceState(null, "", u);
     } else if (act === "show") { highlight(); marked?.scrollIntoView({ behavior: "smooth", block: "center" }); }
+    else if (act === "start") { started = true; render(); marked?.scrollIntoView({ behavior: "smooth", block: "center" }); }
     else if (act === "collapse") { collapsed = !collapsed; render(); }
   });
   render();
