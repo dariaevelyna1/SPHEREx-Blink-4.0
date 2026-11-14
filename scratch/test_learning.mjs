@@ -37,6 +37,6 @@ const home = readFileSync(new URL("../frontend/overview.html", import.meta.url),
 const learn = readFileSync(new URL("../frontend/learn.html", import.meta.url), "utf8");
 const science = readFileSync(new URL("../frontend/js/scienceExplain.js", import.meta.url), "utf8");
 check("new landing offers both modes and the Blink 4.0 headline", home.includes("SPHEREx Blink 4.0") && home.includes("Explore the Universe Your Way") && home.includes("Learn Mode") && home.includes("Science Mode"));
-check("learn page includes all levels, Astra, profile and classroom areas", learn.includes("Astra") && learn.includes("learner-profile") && learn.includes("classroom-dashboard") && learn.includes("SYNTHETIC") && learn.includes("aria-live"));
+check("learn page includes all levels, Astra and classroom areas (the learner profile panel was removed on purpose, 14 Nov 2026)", learn.includes("Astra") && !learn.includes("learner-profile") && learn.includes("classroom-dashboard") && learn.includes("SYNTHETIC") && learn.includes("aria-live"));
 check("Science Mode exposes a keyboard-operable simple explanation on each panel", science.includes('querySelectorAll("main .panel")') && science.includes('aria-expanded') && science.includes("Explain Simply"));
 if (failed) process.exitCode = 1;

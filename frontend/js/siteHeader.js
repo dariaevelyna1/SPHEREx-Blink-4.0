@@ -22,7 +22,6 @@ const MODES = {
     ["learn", "🚀 Missions", "learn.html#missions"],
     ["lessons", "📖 Lessons", "learn.html#lesson-panel"],
     ["astra", "🤖 Astra guide", "learn.html#astra"],
-    ["profile", "👤 My progress", "learn.html#learner-profile"],
     ["index", "🧪 Practice lab", PRACTICE],
   ] },
   science: { label: "🔬 Science Mode", home: "index.html#workspace", pages: [
@@ -35,12 +34,14 @@ const MODES = {
     ["about", "About", "index.html#about"],
   ] },
 };
-const pages = [["overview", "Home", "overview.html"], ...(mode ? MODES[mode].pages : [])];
+// On the home page no mode is active: the menu shows only Home and the page's two mode cards choose one.
+const showMode = mode && current !== "overview";
+const pages = [["overview", "Home", "overview.html"], ...(showMode ? MODES[mode].pages : [])];
 
 const nav = document.createElement("nav");
 nav.id = "project-nav";
 nav.setAttribute("aria-label", "Project pages");            // the chip below names the mode
-if (mode) {
+if (showMode) {
   const chip = document.createElement("span");
   chip.className = `mode-chip mode-chip-${mode}`;
   chip.textContent = MODES[mode].label;
@@ -54,7 +55,7 @@ for (const [id, label, url] of pages) {
   link.dataset.page = id;
   nav.append(link);
 }
-if (mode) {
+if (showMode) {
   const other = mode === "learn" ? "science" : "learn";
   const sw = document.createElement("a");
   sw.className = "mode-switch-link";
@@ -74,7 +75,7 @@ function indicatePage() {
   const hash = location.hash;
   let active = current;
   if (current === "index") active = hash === "#about" ? "about" : hash === "#pin-board" ? "pins" : "index";
-  if (current === "learn") active = hash === "#lesson-panel" ? "lessons" : hash === "#astra" ? "astra" : hash === "#learner-profile" ? "profile" : "learn";
+  if (current === "learn") active = hash === "#lesson-panel" ? "lessons" : hash === "#astra" ? "astra" : "learn";
   for (const link of nav.querySelectorAll("a[data-page]")) {
     if (link.dataset.page === active) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");

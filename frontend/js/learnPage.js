@@ -226,22 +226,24 @@ function renderSummary() {
   $("#xp-total").textContent = `${profile.xp} XP`;
   $("#rank-label").textContent = rankForXp(profile.xp);
   $("#streak-label").textContent = `${profile.streak} day${profile.streak === 1 ? "" : "s"} streak`;
-  $("#profile-xp").textContent = `${profile.xp} XP`;
-  $("#profile-rank").textContent = rankForXp(profile.xp);
-  $("#profile-completed").textContent = `${completed} / ${LEVELS.length}`;
-  const minutes = Math.floor(profile.timeSeconds / 60);
-  $("#profile-time").textContent = minutes ? `${minutes} min` : profile.timeSeconds ? "<1 min" : "0 min";
-  if (document.activeElement !== $("#profile-name")) $("#profile-name").value = profile.name;
-  const options = state.profiles.map((item) => el("option", { value: item.id, selected: item.id === state.activeProfileId }, item.name));
-  $("#profile-select").replaceChildren(...options);
-  const won = new Set(earnedAchievements(profile).map((item) => item.id));
-  $("#badge-list").replaceChildren(...ACHIEVEMENTS.map((badge) => {
-    const li = el("li", { className: won.has(badge.id) ? "is-earned" : "is-locked" });
-    const description = el("span");
-    description.append(el("strong", {}, badge.name), el("small", {}, badge.description));
-    li.append(el("span", { className: "badge-icon", "aria-hidden": "true" }, badge.icon), description);
-    return li;
-  }));
+  if ($("#learner-profile")) {                        // the learner profile panel was removed from learn.html (author, 14 Nov 2026); kept working if it returns
+    $("#profile-xp").textContent = `${profile.xp} XP`;
+    $("#profile-rank").textContent = rankForXp(profile.xp);
+    $("#profile-completed").textContent = `${completed} / ${LEVELS.length}`;
+    const minutes = Math.floor(profile.timeSeconds / 60);
+    $("#profile-time").textContent = minutes ? `${minutes} min` : profile.timeSeconds ? "<1 min" : "0 min";
+    if (document.activeElement !== $("#profile-name")) $("#profile-name").value = profile.name;
+    const options = state.profiles.map((item) => el("option", { value: item.id, selected: item.id === state.activeProfileId }, item.name));
+    $("#profile-select").replaceChildren(...options);
+    const won = new Set(earnedAchievements(profile).map((item) => item.id));
+    $("#badge-list").replaceChildren(...ACHIEVEMENTS.map((badge) => {
+      const li = el("li", { className: won.has(badge.id) ? "is-earned" : "is-locked" });
+      const description = el("span");
+      description.append(el("strong", {}, badge.name), el("small", {}, badge.description));
+      li.append(el("span", { className: "badge-icon", "aria-hidden": "true" }, badge.icon), description);
+      return li;
+    }));
+  }
   const rows = state.profiles.map((item) => {
     const tr = el("tr");
     const scores = Object.values(item.quizScores);
@@ -263,25 +265,27 @@ function render() {
   renderSummary();
 }
 
-$("#profile-select").addEventListener("change", (event) => { state = selectProfile(state, event.target.value); currentLevelId = unlockedLevel(activeProfile(state)); latestQuizAnswer = null; placements = {}; save(); render(); });
-$("#profile-form").addEventListener("submit", (event) => {
-  event.preventDefault();
-  const name = $("#profile-name").value.trim().slice(0, 40);
-  if (!name) return;
-  state = renameActiveProfile(state, name);
-  save();
-  renderSummary();
-});
-$("#add-learner-form").addEventListener("submit", (event) => {
-  event.preventDefault();
-  const name = $("#new-learner-name").value.trim();
-  if (!name) return;
-  state = addProfile(state, name, `learner-${Date.now()}`);
-  $("#new-learner-name").value = "";
-  currentLevelId = 1;
-  save();
-  render();
-});
+if ($("#learner-profile")) {
+  $("#profile-select").addEventListener("change", (event) => { state = selectProfile(state, event.target.value); currentLevelId = unlockedLevel(activeProfile(state)); latestQuizAnswer = null; placements = {}; save(); render(); });
+  $("#profile-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const name = $("#profile-name").value.trim().slice(0, 40);
+    if (!name) return;
+    state = renameActiveProfile(state, name);
+    save();
+    renderSummary();
+  });
+  $("#add-learner-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const name = $("#new-learner-name").value.trim();
+    if (!name) return;
+    state = addProfile(state, name, `learner-${Date.now()}`);
+    $("#new-learner-name").value = "";
+    currentLevelId = 1;
+    save();
+    render();
+  });
+}
 $("#classroom-name").addEventListener("change", (event) => { state.classroomName = event.target.value.trim().slice(0, 60) || "My classroom"; save(); });
 
 $("#astra-form").addEventListener("submit", (event) => {
