@@ -430,7 +430,7 @@
         <div><p class="pb-kicker">Pro laboratory · no login</p><h2 id="pin-board-title">📌 Discovery Pin Board</h2></div>
         <div class="pb-stats" id="pin-stats" aria-live="polite"></div>
       </div>
-      <p class="muted">Like reporting something on a road map: run a search, select a moving object, press <strong>📌 Pin &amp; Report Object (Waze Style)</strong> and type your observer name. Every pin on this browser shows who reported it, where, when and its SHA-256 hash. Pins stay <strong>in this browser</strong>; nothing is sent anywhere. A pin is still a candidate until others confirm it.</p>
+      <p class="muted">Like reporting something on a road map: run a search, select a moving object, press <strong>📌 Pin &amp; Report Object (Waze Style)</strong> and type your observer name. Every pin shows who reported it, where, when and its SHA-256 hash. Pins go on a <strong>shared board that everyone who opens this site sees</strong>, and they stay there: nobody can change or delete them from the site. Your observer name and the object's position become public. A pin is still a candidate until others confirm it.</p>
       <div class="pb-toolbar">
         <div class="pb-toggle" role="group" aria-label="Map view">
           <button type="button" class="pb-view" data-view="sky" aria-pressed="true">🌌 All sky</button>
@@ -442,6 +442,7 @@
         <svg id="pin-map" class="pin-map" viewBox="0 0 720 360" role="img" aria-label="Sky map of the pins"></svg>
         <div class="pb-popup" id="pin-popup" hidden></div>
       </div>
+      <p class="pb-sync small" id="pin-sync" role="status" aria-live="polite"></p>
       <p class="pb-legend small"><span class="pb-key pb-key-real"></span> real data <span class="pb-key pb-key-syn"></span> synthetic demo <span class="pb-key pb-key-here"></span> field on screen <span class="pb-key pb-key-ecl"></span> ecliptic (planets' path). Background stars are decorative.</p>
       <p class="pb-empty" id="pin-empty">🛰️ No pins yet. Find movers, select one and pin it: it will appear here.</p>
       <ul class="pin-list" id="pin-list"></ul>

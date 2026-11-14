@@ -3,6 +3,8 @@
 import { missionWhy, missionsDatabase, pickRandomMission, missionHref, loadProgress, saveProgress, markComplete, noteShown } from "./missions.js";
 import { makePin, pinTag, loadPins, savePins, addPin, removePin, skyToMap, verifyPin, eclipticPoints, fieldOffsetArcmin, initials, timeAgo, decorativeStars } from "./pinBoard.js";
 import { formatRA, formatDec } from "../coords.js";
+import { sharedConfig, fetchSharedPins, pushSharedPin, mergePins } from "./pinSync.js";
+import { PIN_BOARD_URL, PIN_BOARD_KEY } from "../config.js";
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 const $ = (id) => document.getElementById(id);
@@ -88,6 +90,9 @@ export function setupPinBoard({ getCandidate, getContext }) {
   const W = 720, H = 360;
   let pins = loadPins(store);
   let view = "sky";
+  const shared = sharedConfig(PIN_BOARD_URL, PIN_BOARD_KEY);
+  let syncText = shared ? "🌍 Connecting to the shared board…" : "💾 Pins are kept in this browser only.";
+  let syncBad = false;
   let openId = null;
   const dialog = $("pin-dialog");
   const pinBtns = [$("pin-report-btn"), $("pin-board-pin-btn")].filter(Boolean);
@@ -198,6 +203,23 @@ export function setupPinBoard({ getCandidate, getContext }) {
     verifyInto(popup);
   }
 
+  async function sync() {
+    if (!shared) return;
+    try {
+      for (const p of pins.filter((x) => x.pending)) { await pushSharedPin(shared, p); p.pending = false; }
+      const { pins: remote, dropped } = await fetchSharedPins(shared);
+      pins = mergePins(pins.filter((p) => !p.shared || remote.some((r) => r.hash === p.hash)), remote);
+      savePins(store, pins);
+      const people = new Set(remote.map((p) => p.observer)).size;
+      syncText = `🌍 Shared board: ${remote.length} pin${remote.length === 1 ? "" : "s"} from ${people} observer${people === 1 ? "" : "s"}, seen by everyone who opens this site. Updated ${new Date().toLocaleTimeString()}.` + (dropped ? ` ${dropped} record(s) failed their hash check and are not shown.` : "");
+      syncBad = false;
+    } catch (err) {
+      syncText = `⚠ The shared board cannot be reached (${err.message}) Your pins are kept in this browser and will be sent when it answers again.`;
+      syncBad = true;
+    }
+    render();
+  }
+
   function render() {
     drawBase();
     drawPins();
@@ -206,10 +228,13 @@ export function setupPinBoard({ getCandidate, getContext }) {
     $("pin-empty").hidden = pins.length > 0;
     const observers = new Set(pins.map((p) => p.observer));
     $("pin-stats").innerHTML = `<span class="pb-stat"><b>${pins.length}</b> pin${pins.length === 1 ? "" : "s"}</span><span class="pb-stat"><b>${observers.size}</b> observer${observers.size === 1 ? "" : "s"}</span>`;
+    $("pin-sync").textContent = syncText;
+    $("pin-sync").classList.toggle("is-bad", syncBad);
+    $("pin-clear-btn").hidden = Boolean(shared);
     for (const p of pins) {
       const li = document.createElement("li");
       li.className = "pin-item" + (p.id === openId ? " is-open" : "");
-      li.innerHTML = cardHtml(p) + `<p class="pb-popup-actions"><button type="button" class="btn btn-small" data-act="locate" data-id="${esc(p.id)}">📍 Show on map</button> <a class="btn btn-small" href="${esc(fieldLink(p))}">Open this field</a> <button type="button" class="btn btn-small" data-act="remove" data-id="${esc(p.id)}">Remove</button></p>`;
+      li.innerHTML = cardHtml(p) + `<p class="pb-popup-actions"><button type="button" class="btn btn-small" data-act="locate" data-id="${esc(p.id)}">📍 Show on map</button> <a class="btn btn-small" href="${esc(fieldLink(p))}">Open this field</a> ${p.shared ? `<span class="pb-chip">🌍 shared · permanent</span>` : p.pending ? `<span class="pb-chip">⏳ waiting to be sent</span>` : `<button type="button" class="btn btn-small" data-act="remove" data-id="${esc(p.id)}">Remove</button>`}</p>`;
       list.appendChild(li);
     }
     verifyInto(list);
@@ -248,7 +273,7 @@ export function setupPinBoard({ getCandidate, getContext }) {
     const ctx = getContext();
     $("pin-preview").innerHTML = `<p class="pb-coords"><span>RA <b>${esc(formatRA(c.ra))}</b></span><span>Dec <b>${esc(formatDec(c.dec))}</b></span></p>
       <p class="pb-chips">${chips({ ...c, checks: { detections: c.nDet, images: c.nFrames, knownObject: c.known }, dataKind: ctx.realData ? "real" : "synthetic" })}</p>
-      <p class="small muted">Time of the report: now (${esc(new Date().toLocaleString())}). The pin gets a SHA-256 hash of its own text.</p>`;
+      <p class="small muted">Your observer name and this position will be <strong>public and permanent</strong> on the shared board. Time of the report: now (${esc(new Date().toLocaleString())}). The pin gets a SHA-256 hash of its own text.</p>`;
     $("pin-name-error").textContent = "";
     try { $("pin-name").value = store?.getItem("spherex-blink-observer") ?? ""; } catch {}
     dialog.showModal();
@@ -260,9 +285,12 @@ export function setupPinBoard({ getCandidate, getContext }) {
     e.preventDefault();
     try {
       const pin = await makePin(getCandidate(), { observer: $("pin-name").value, ...getContext() });
+      if (shared) pin.pending = true;
       pins = addPin(pins, pin);
       try { store?.setItem("spherex-blink-observer", pin.observer); } catch {}
-      $("pin-status").textContent = savePins(store, pins) ? `📌 Pinned: ${pinTag(pin)}.` : "This browser would not store the pin; it is shown until the page is reloaded.";
+      savePins(store, pins);
+      $("pin-status").textContent = shared ? `📌 Pinned: ${pinTag(pin)}. Sending it to the shared board…` : `📌 Pinned: ${pinTag(pin)}.`;
+      if (shared) sync().then(() => { $("pin-status").textContent = pin.pending ? `📌 ${pinTag(pin)} is saved here; it will be shared when the board answers.` : `📌 Shared with everyone: ${pinTag(pin)}. It stays on the board permanently.`; });
       dialog.close();
       openId = pin.id;
       if (view === "field" && !project(pin.ra, pin.dec).inside) setView("sky");
@@ -279,5 +307,6 @@ export function setupPinBoard({ getCandidate, getContext }) {
 
   render();
   refresh();
+  if (shared) { sync(); setInterval(() => { if (!document.hidden) sync(); }, 60000); }   // new pins from others appear within a minute
   return { refresh, render };
 }

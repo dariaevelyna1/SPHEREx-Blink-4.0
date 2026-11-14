@@ -59,5 +59,16 @@ check("map projection", a.x === 1 && a.y === 0 && b.x === 0.5 && b.y === 1);
 check("page has the pin button and the dialog", html.includes('id="pin-report-btn"') && html.includes("Enter Observer Name / Handle:") && html.includes("📌 Pin &amp; Report Object (Waze Style)"));
 check("missions card is in Learn Mode", learn.includes('id="mission-card"') && !html.includes('id="mission-card"'));
 
+const { sharedConfig, fetchSharedPins, pushSharedPin, mergePins } = await import("../frontend/js/features/pinSync.js");
+check("shared config: accepts a publishable key, refuses a secret key and other hosts", Boolean(sharedConfig("https://xmxhtkcmaijmapfyuwcg.supabase.co", "sb_publishable_JT4A-xKALCWAKcyF9SfOxg_HVvJGbTY")) && !sharedConfig("https://xmxhtkcmaijmapfyuwcg.supabase.co", "sb_secret_abcdefghijklmnopqrstuvwxyz") && !sharedConfig("https://evil.example.com", "sb_publishable_JT4A-xKALCWAKcyF9SfOxg_HVvJGbTY"));
+const cfg = sharedConfig("https://xmxhtkcmaijmapfyuwcg.supabase.co", "sb_publishable_JT4A-xKALCWAKcyF9SfOxg_HVvJGbTY");
+const forged = { ...pin, observer: "Mallory" };
+const fakeFetch = async () => ({ ok: true, json: async () => [{ record: pin, hash: pin.hash }, { record: forged, hash: pin.hash }] });
+const got = await fetchSharedPins(cfg, { fetchFn: fakeFetch, subtle: webcrypto.subtle });
+check("shared pins: a record that fails its hash is dropped", got.pins.length === 1 && got.dropped === 1 && got.pins[0].shared === true);
+let sentBody = null; await pushSharedPin(cfg, { ...pin, pending: true }, { fetchFn: async (u, o) => { sentBody = JSON.parse(o.body); return { ok: false, status: 409 }; } });
+check("push: duplicate counts as done, local flags not sent", sentBody.hash === pin.hash && !("pending" in sentBody.record));
+check("merge: one per hash, shared wins", mergePins([{ ...pin, pending: true }], got.pins).length === 1 && mergePins([{ ...pin, pending: true }], got.pins)[0].pending === false);
+
 console.log(failed ? `FAIL  ${failed} check(s) failed` : "PASS  all missions/pin board checks");
 process.exit(failed ? 1 : 0);

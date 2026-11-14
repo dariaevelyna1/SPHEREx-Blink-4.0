@@ -1509,3 +1509,5 @@ html[data-theme] .site-footer { border-top: 1px solid var(--border); background:
 .mover-meter-track span { display: block; height: 100%; background: var(--success); border-radius: 6px; }
 .mover-detail { border-radius: var(--radius-sm); border: 1px solid rgb(var(--accent-rgb) / .45); background: var(--surface); }
 .mover-detail > .btn { margin: .2rem .3rem .2rem 0; }
+.pb-sync { margin: 6px 0; padding: 6px 10px; border-radius: 10px; background: rgb(var(--accent-rgb) / .08); border: 1px solid rgb(var(--accent-rgb) / .3); }
+.pb-sync.is-bad { border-color: var(--warn); background: rgb(var(--warn-rgb) / .1); }
