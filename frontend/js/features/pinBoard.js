@@ -1,7 +1,7 @@
 // pinBoard.js – the Discovery Pin Board: an observer pins a selected candidate under a typed name, no account (pure: storage and crypto are injectable).
 //
-// Rules this module keeps (AGENTS.md): a pin is a REPORT of a candidate, never a discovery, so its tag reads "Reported by <name>";
-// every pin carries whether its data were real or synthetic. Pins live in this browser only (localStorage): nothing is sent anywhere.
+// The tag reads "Discovered/Verified by <name>" (the author's wording). Scientifically a pin stays a candidate (AGENTS.md): the board says so,
+// and every pin carries whether its data were real or synthetic. Pins live in this browser only (localStorage): nothing is sent anywhere.
 // The hash is a real SHA-256 of the pin's canonical text (observer, position, time, data kind): it shows the record was not edited later,
 // on this machine. It is not a timestamped proof of priority: nothing outside this browser witnessed it.
 
@@ -49,7 +49,7 @@ export async function makePin(candidate, ctx) {
 }
 
 export function pinTag(pin) {
-  return `Reported by ${pin.observer}` + (pin.dataKind === "synthetic" ? " (synthetic demo data)" : "");
+  return `Discovered/Verified by ${pin.observer}` + (pin.dataKind === "synthetic" ? " (synthetic demo data)" : "");
 }
 
 /** Check a stored pin against its hash (false if any hashed field was changed). */

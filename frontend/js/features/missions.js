@@ -141,9 +141,8 @@ export function missionHref(mission, currentSearch = "") {
   const p = new URLSearchParams();
   for (const k of ["data", "api", "theme"]) if (keep.has(k)) p.set(k, keep.get(k));
   if (t.kind === "query") for (const [k, v] of new URLSearchParams(t.query)) p.set(k, v);
-  if (t.kind === "section") return null;                  // stays on the current field
   const qs = p.toString();
-  return `index.html${qs ? "?" + qs : "?mode=blink"}#missions`;
+  return `index.html${qs ? "?" + qs : "?mode=blink"}${t.kind === "section" ? t.hash : ""}`;
 }
 
 const KEY = "spherex-blink-missions";

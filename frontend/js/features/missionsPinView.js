@@ -27,11 +27,11 @@ export function setupMissions() {
     $("mission-done-btn").textContent = done ? "Completed ✓" : "I did it";
     const href = missionHref(m, location.search);
     const go = $("mission-go");
-    if (m.target.kind === "section") { go.href = m.target.hash; go.textContent = "Go to the tool"; }
+    if (m.target.kind === "section") { go.href = href; go.textContent = "Open the tool in Science Mode"; }
     else { go.href = href; go.textContent = m.target.kind === "demo" ? "Open the synthetic demo field" : "Load this field"; }
-    $("mission-progress").textContent = `Missions completed: ${progress.completed.length} of ${missionsDatabase.length}`;
-    $("mission-progress-bar").value = progress.completed.length;
-    $("mission-progress-bar").max = missionsDatabase.length;
+    $("cm-progress").textContent = `Missions completed: ${progress.completed.length} of ${missionsDatabase.length}`;
+    $("cm-progress-bar").value = progress.completed.length;
+    $("cm-progress-bar").max = missionsDatabase.length;
   }
 
   function loadRandom() {

@@ -23,6 +23,26 @@
       <section id="lesson-panel" class="lesson-panel" aria-labelledby="lesson-title" aria-live="polite" aria-atomic="false"><p>Loading your first mission…</p></section>
     </div>
 
+    <!-- ============ Cosmic Missions (features/missions.js, missionsPinView.js) ============ -->
+    <section class="learn-section panel missions" id="missions" aria-labelledby="missions-title">
+      <h2 id="missions-title">Cosmic Missions</h2>
+      <p class="muted">A random mission each visit: short tasks that teach the blink method, proper motion, parallax and the search for a distant planet with the tools on this page. Progress is kept in this browser only.</p>
+      <article class="mission-card" id="mission-card" aria-live="polite">
+        <p class="muted small" id="mission-category"></p>
+        <h3 id="mission-title"></h3>
+        <p id="mission-story"></p>
+        <p><strong>Objective:</strong> <span id="mission-objective"></span></p>
+        <p class="mission-feedback" id="mission-feedback" hidden></p>
+        <p class="mission-actions">
+          <a class="btn btn-small" id="mission-go" href="#"></a>
+          <button type="button" class="btn btn-small btn-primary" id="mission-done-btn">I did it</button>
+          <button type="button" class="btn btn-small" id="mission-random-btn">Load random mission</button>
+        </p>
+      </article>
+      <p class="small"><span id="cm-progress"></span> <progress id="cm-progress-bar" value="0" max="1"></progress>
+        <button type="button" class="btn btn-small" id="mission-reset-btn">Reset progress</button></p>
+    </section>
+
     <section class="learn-section astra-section" aria-labelledby="astra-title">
       <div class="section-heading"><p class="learn-kicker">Your offline guide</p><h2 id="astra-title">🤖 Astra, your space guide</h2><p>Ask about a space topic, or choose a quick question. Astra uses prepared explanations on this page; it does not send your question to an AI service.</p></div>
       <div class="astra-card"><form id="astra-form"><label for="astra-question">What are you curious about?</label><div class="astra-input-row"><input id="astra-question" maxlength="180" placeholder="Try: What is infrared light?" autocomplete="off"><button class="learn-button learn-button-primary" type="submit">Ask Astra</button></div></form><div class="astra-quick" aria-label="Ask a suggested question"><button type="button" data-ask="What is infrared light?">What is infrared?</button><button type="button" data-ask="What is a candidate mover?">What is a moving object?</button><button type="button" data-ask="What is redshift?">What is redshift?</button></div><p id="astra-answer" class="astra-answer" role="status" aria-live="polite">Astra is ready. Pick a topic to begin.</p></div>
@@ -46,6 +66,7 @@
   <footer class="learn-footer"><span>Learn Mode · SPHEREx Blink 4.0</span><span>Example visuals are synthetic. A candidate is a clue, not a discovery.</span></footer>
   <script type="module" src="js/siteHeader.js"></script>
   <script type="module" src="js/learnPage.js"></script>
+  <script type="module">import { setupMissions } from "./js/features/missionsPinView.js"; setupMissions();</script>
   <script type="module" src="js/features/highContrast.js"></script>
 </body>
 </html>
