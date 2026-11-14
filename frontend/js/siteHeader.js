@@ -117,7 +117,7 @@ header.addEventListener("keydown", event => {
     toggle.focus();
   }
 });
-matchMedia("(max-width: 64rem)").addEventListener("change", () => setOpen(false));
+matchMedia("(max-width: 90rem)").addEventListener("change", () => setOpen(false));
 setupThemeSwitcher(theme);
 addEventListener("storage", event => {
   if (event.key !== STORAGE_KEY && event.key !== null) return;

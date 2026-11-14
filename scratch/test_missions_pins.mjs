@@ -14,12 +14,12 @@ const keys = ["id", "category", "title", "story", "targetType", "objective", "su
 check("at least 15 missions, every one with all fields", missionsDatabase.length >= 15 && missionsDatabase.every((m) => keys.every((k) => typeof m[k] === "string" && m[k])));
 check("ids unique", new Set(missionsDatabase.map((m) => m.id)).size === missionsDatabase.length);
 check("at least 4 categories", new Set(missionsDatabase.map((m) => m.category)).size >= 4);
-check("at least 40 practical missions, each with steps", missionsDatabase.length >= 40 && missionsDatabase.every((m) => m.steps.length >= 1 && m.steps.every((s) => s.does && (s.check.on || s.check.see))));
+check("at least 40 practical missions, each with steps", missionsDatabase.length >= 40 && missionsDatabase.every((m) => m.steps.length >= 1 && m.steps.every((s) => s.does && (s.check.on || s.check.see || s.check.measure))));
 const ids = new Set([...html.matchAll(/id="([^"]+)"/g)].map((x) => x[1]));
 const missing = [];
 for (const m of missionsDatabase) {
   if (m.start.hash && !ids.has(m.start.hash.slice(1))) missing.push(m.id + " " + m.start.hash);
-  for (const s of m.steps) for (const sel of (s.check.on || s.check.see).split(",")) { const first = sel.trim().match(/^#([\w-]+)/); if (first && !ids.has(first[1])) missing.push(m.id + " " + sel); }
+  for (const s of m.steps) for (const sel of (s.check.on || s.check.see || "").split(",").filter(Boolean)) { const first = sel.trim().match(/^#([\w-]+)/); if (first && !ids.has(first[1])) missing.push(m.id + " " + sel); }
 }
 check("every control a step points to exists in Science Mode", missing.length === 0, missing.join("; "));
 const fake = (matches, label) => ({ closest: (s) => (s === "label" ? label : matches(s) ? {} : null) });

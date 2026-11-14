@@ -139,7 +139,7 @@ export function setupPinBoard({ getCandidate, getContext }) {
   let pins = loadPins(store);
   let view = "sky";
   const shared = sharedConfig(PIN_BOARD_URL, PIN_BOARD_KEY);
-  let syncText = shared ? "🌍 Connecting to the shared board…" : "💾 Pins are kept in this browser only.";
+  let syncText = shared ? "🌍 Shared board: loading…" : "💾 Pins are kept in this browser only.";
   let syncBad = false;
   let openId = null;
   const dialog = $("pin-dialog");
@@ -413,6 +413,13 @@ export function setupPinBoard({ getCandidate, getContext }) {
 
   render();
   refresh();
-  if (shared) { sync(); setInterval(() => { if (!document.hidden) sync(); }, 60000); }   // new pins from others appear within a minute
+  // the shared board is asked only once the pin board is on screen (the synthetic demo contacts no other host until then), then every minute
+  if (shared) {
+    let started = false;
+    const start = () => { if (started) return; started = true; sync(); setInterval(() => { if (!document.hidden) sync(); }, 60000); };
+    if ("IntersectionObserver" in window) new IntersectionObserver((entries, obs) => { if (entries.some((e) => e.isIntersecting)) { obs.disconnect(); start(); } }).observe($("pin-board"));
+    else start();
+    for (const b of pinBtns) b.addEventListener("click", start);
+  }
   return { refresh, render };
 }

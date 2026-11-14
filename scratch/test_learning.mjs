@@ -22,7 +22,7 @@ check("out-of-order imported level completions cannot skip locked lessons", acti
 check("malformed saved state safely returns a fresh profile", activeProfile(readState("{")).completed.length === 0);
 check("level two is locked until level one is completed", unlockedLevel(activeProfile(empty)) === 1 && unlockedLevel(activeProfile(completeLevel(empty, 2))) === 1);
 const levelOne = completeLevel(empty, 1, "2026-11-14");
-check("correct completion awards XP and unlocks only the next level", activeProfile(levelOne).xp === 10 && unlockedLevel(activeProfile(levelOne)) === 2 && progressPercent(activeProfile(levelOne)) === 13);
+check("correct completion awards XP and unlocks only the next level", activeProfile(levelOne).xp === 10 && unlockedLevel(activeProfile(levelOne)) === 2 && progressPercent(activeProfile(levelOne)) === Math.round(100 / LEVELS.length));   // 1 of 16 lessons since 14 Nov 2026 (was 1 of 8 = 13 %)
 check("a completed level cannot award XP twice", activeProfile(completeLevel(levelOne, 1, "2026-11-14")).xp === 10);
 check("streak increases on the next calendar day and resets after a gap", activeProfile(completeLevel(levelOne, 2, "2026-11-15")).streak === 2 && activeProfile(completeLevel(levelOne, 2, "2026-11-17")).streak === 1);
 check("rank and badges are derived from learner progress", rankForXp(0) === "First Light Cadet" && rankForXp(80) === "Cosmic Navigator" && earnedAchievements(activeProfile(levelOne)).some((x) => x.id === "first-light"));
