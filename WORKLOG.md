@@ -1,4 +1,4 @@
-NEXT STEP: do P7 (classroom worksheet learn-worksheet.html, RO header badges, QA pass: both views, both profiles, RO/EN, mobile, reduced motion); build the Docker image only if the author allows pulling python:3.12.10-slim.
+NEXT STEP: do P7 (classroom worksheet learn-worksheet.html, RO header badges, QA pass: both views, both profiles, RO/EN, mobile, reduced motion); the Docker image is built and smoke-tested locally (not deployed).
 
 # WORKLOG: SPHEREx Blink 4.0
 
@@ -195,3 +195,12 @@ and 3.0's whole page layout, HTML and CSS (not allowed to be copied).
   browser runs, through Node, so stored and in-browser results agree; the serving image has no NumPy/Astropy because serving never processes.
 - WHAT REMAINS: an admin-token entry in the page (the admin route exists, nothing in the frontend uses it yet); building the image; the
   author's deployment (DEPLOY_FULL.md). Cloud readiness may be claimed only as "Dockerfile and smoke test exist; image not built; not deployed".
+
+### P6 addendum: the Docker image (2026-11-14)
+
+- The author said yes to pulling `python:3.12.10-slim`. Docker Desktop was started (`open -a Docker`). `docker build -t spherex-blink-api:p6 .`
+  -> built (286 MB); no FITS or `.env` inside; non-root user (uid 10001).
+- Smoke test against the container: `edu` profile -> all checks passed; `full` profile over the scratchpad test store (mounted read-only,
+  synthetic FITS through the fake archive) -> all checks passed, including the 403 on pixels and the 429 rate limit.
+- So the claim allowed now is: "Dockerfile builds; the image passes the smoke test locally in both profiles; not deployed; the GCS store is
+  tested only with a fake client". The image was not pushed anywhere.

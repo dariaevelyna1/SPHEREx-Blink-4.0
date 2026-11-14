@@ -67,3 +67,12 @@ the reused detector: the recovered motion is within 3 ″/yr of the injected one
 Smoke test against a local full backend over a store built from the same synthetic FITS:
 `node scripts/smoke_test_full.mjs http://127.0.0.1:8013 --sequence test-field-d2 --origin http://localhost:8774` -> 20 PASS, including
 "the pixel route refuses (403)" and "rate limit answers 429 (after 60 requests)". This shows the checks work; it says nothing about a deployment.
+
+The container (author's yes to pull `python:3.12.10-slim`, 2026-11-14): `docker build -t spherex-blink-api:p6 .` -> built, 286 MB; inside it
+no `*.fits` and no `.env*`, `/srv/backend` holds only `app.py`, `approved_sequences.json`, `blink/`, `requirements-serve.txt`; the process
+runs as uid 10001. Then:
+- `docker run -p 8090:8080 spherex-blink-api:p6` (edu) and `node scripts/smoke_test_full.mjs http://127.0.0.1:8090 --expect-profile edu --sequence syn-a-d2 --skip-rate-limit` -> all smoke checks passed;
+- the same image with `BLINK_PROFILE=full`, the scratchpad test store mounted read-only, `REAL_DATA_ENABLED=true`, and
+  `node scripts/smoke_test_full.mjs http://127.0.0.1:8091 --sequence test-field-d2 --origin http://localhost:8774` -> all smoke checks passed
+  (pixels refused with 403, rate limit 429).
+Not tested: the image on Cloud Run, the GCS store from inside the container (no bucket, no credentials were used).
