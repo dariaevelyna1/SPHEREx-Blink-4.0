@@ -1,4 +1,4 @@
-NEXT STEP: do P8 (final submission pack: update docs/SUBMISSION.md with what really works, final report to the author in Romanian).
+NEXT STEP: the author's turn: answer decisions 1, 4, 6, 8 (DECISIONS NEEDED below), choose the public demo host, make the video or slides, run `node scripts/prepush_check.mjs`, then push.
 
 # WORKLOG: SPHEREx Blink 4.0
 
@@ -222,3 +222,32 @@ and 3.0's whole page layout, HTML and CSS (not allowed to be copied).
   (the code path: Learn does not auto-blink, Science starts at 1 image/s; not observed), a screen reader, Safari/Firefox, a real phone.
 - WHY: translating only the words keeps the honesty signal (colour and kind) identical in both languages.
 - WHAT REMAINS: failure sentences from the data client are English inside the Romanian page; local-impact facts need the author (decision 6).
+
+## P8 Final submission pack
+
+- 2026-11-14 (local). Status: DONE. Commit: "P8 final submission pack" (see `git log`).
+- WHAT: `docs/SUBMISSION.md` updated with what really works (live demo = static `edu` bundle, no cloud backend; the exact allowed wording for
+  cloud readiness; seven reused modules; worksheet; extra Q&A; a list of what is not verified); README status, links and test commands.
+- HOW: all Node test files pass; pytest 38 passed; prepush PASS (see the commit). No new feature.
+
+## Final state (end of P8)
+
+- Commits: P0 `c5fb445`, P1 `fabdacd`, P2 `2179e54`, P3 `28b870b`, P4 `c178d20`, P5 `0c4d465`, Python note `11dade1`, P6 `92e1654` + `253c90f`
+  (Docker), P7 `9f64759`, P8 (this). `origin` = https://github.com/mateibut/SPHEREx-Blink-4.0. **Nothing pushed.**
+- Tests: 11 Node test files (all pass), 38 pytest tests (all pass), prepush check PASS, structural-difference test 23 checks, theme 45 checks.
+- Live demo: `frontend/` served as static files (Learn on phones, Science on a laptop). Public link: not decided.
+- Not verified at all: official rules, data terms, any deployment or real bucket, real SPHEREx files in 4.0, printing, reduced motion in a
+  browser, screen readers, Safari/Firefox, real phones.
+
+## DECISIONS NEEDED FROM THE AUTHOR
+
+| # | Unresolved | Blocks | What the author must answer | Default used |
+|---|---|---|---|---|
+| 1 | Serve real pixels / enable real data for a sequence | `REAL_DATA_ENABLED`, `SERVE_PIXELS` | yes/no, per sequence | both false |
+| 2 | Cloud provider | - | decided: Google Cloud, `spherex-blink` | - |
+| 3 | Repository | - | decided: SPHEREx-Blink-4.0; unification with 2.0/3.0 open | separate |
+| 4 | SPHEREx/IRSA data terms, acknowledgement wording, copies in a bucket | retrieval of real files, `termsChecked` | read the terms, give the wording | [unverified], path off |
+| 5 | Eligibility of work begun on 2026-11-05 | the declaration | ask the organisers | dates stated honestly |
+| 6 | Local-impact claims (schools, partners, curriculum) | slide 6, pitch | only verified names, with consent | nobody named |
+| 7 | Push and deploy | publication | a fresh yes per push | nothing pushed |
+| 8 | Region, bucket, prefix, readers, approved sequences | `docs/DEPLOY_FULL.md` | the values | placeholders, empty allow-list |

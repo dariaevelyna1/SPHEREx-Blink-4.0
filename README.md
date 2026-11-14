@@ -7,7 +7,10 @@ story with a "hunt the mover" game). NASA Space Apps Challenge 2026, Cluj-Napoca
 > pixel is in this repository. A candidate is a lead, never a discovery. The 2.0/3.0 line of this project was started on 2026-11-05, before the
 > hackathon weekend; this repository was started from an empty folder on 2026-11-14 and reuses a few scientific modules from 3.0 (see `CREDITS.md`).
 
-Status: under construction. `WORKLOG.md` says what is done, what was tested and what remains.
+Status (2026-11-14): parts P0-P8 done. The public demo is the static `edu` bundle (synthetic). The real-data backend (`full` profile) is built
+and tested with fakes only; its container passes our smoke test locally; **nothing is deployed**. `WORKLOG.md` says what was tested and what remains.
+
+- `science.html`: the workspace (numbers, uncertainties, provenance). `learn.html`: the story and game (EN/RO). `learn-worksheet.html`: the classroom worksheet.
 
 ## Run it
 
@@ -20,8 +23,11 @@ Then open `http://localhost:8765/` (`?view=science` or `?view=learn`). No build 
 ## Test it
 
 ```bash
-node scripts/run_tests.mjs
+node scripts/run_tests.mjs                      # Node 22+ (on Node 18: NODE_OPTIONS=--experimental-global-webcrypto)
+backend/.venv/bin/python -m pytest backend -q   # Python 3.12+ (Windows: backend/.venv/Scripts/python.exe)
 ```
+
+Real-data backend and deployment: `docs/DEPLOY_FULL.md`. Submission pack: `docs/SUBMISSION.md`. Classroom use: `docs/EDUCATION.md`.
 
 ## Documents
 
