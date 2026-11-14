@@ -14,7 +14,7 @@ What works, checked by which command. "Works" means the named test passes; nothi
 | Backend limits: rate limit, concurrency cap, time cap, size caps, pagination cap, CORS allow-list, admin token | works | `backend/tests/test_edu.py` |
 | Storage interface: `LocalDirStore`, `MemoryStore` (fake) | works | `backend/tests/test_edu.py` |
 | Public-repository gate (no FITS, secrets, e-mail addresses, uncredited assets) | works | `tests/test_prepush.mjs`, `node scripts/prepush_check.mjs` |
-| Science workspace | not built yet | - |
+| Science workspace (`science.html`): sequence list, Blink/Difference/Stack/Trail, playback, stretch, timeline by pass, inspector (image, pointer, provenance), candidate table with injected-truth match, in-browser search, real results as numbers, badges, keyboard, failures shown | works | `tests/test_science_model.mjs` (numbers); manual browser run 2026-11-14 (Chrome pane, 1440x900 and 800x600) |
 | Learn narrative, game, glossary | not built yet | - |
 | Backend `full` profile: Google Cloud Storage store, archive retrieval, processing | not built yet | - |
 | Dockerfile, deployment smoke test | not built yet: **no cloud readiness is claimed** | - |

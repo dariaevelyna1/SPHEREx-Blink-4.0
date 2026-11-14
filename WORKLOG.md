@@ -1,4 +1,4 @@
-NEXT STEP: do P2 (Science workspace: frontend/science.html, css/tokens.css + science.css, js/science/; load a sequence, blink, candidate table, inspector, badges) then P3 (Learn).
+NEXT STEP: do P3 (Learn narrative MVP in English: frontend/learn.html, css/learn.css, js/learn/; stepper of 8 steps, hunt-the-mover game, glossary dialog).
 
 # WORKLOG: SPHEREx Blink 4.0
 
@@ -97,3 +97,28 @@ and 3.0's whole page layout, HTML and CSS (not allowed to be copied).
   - Starlette's test client warns that `httpx` is deprecated in favour of `httpx2`; the warning is filtered in `pytest.ini`, the tests pass.
 - WHAT REMAINS: P2 onward. The `full` profile's stores/catalog paths exist in `catalog.py` but are untested until P6 (GcsStore, cache,
   retrieval, processing are not written yet; `app.make_store` imports them only when `GCS_BUCKET` is set).
+
+## Environment change (2026-11-14, afternoon)
+
+- The work moved from the author's Windows machine to a Mac (`~/Downloads/SPHEREx-Blink-4.0`, unpacked from the author's `nasa.zip`; history intact:
+  `c5fb445` P0, `fabdacd` P1, plus the untracked P2 start). The Windows-only `backend/.venv` was not unpacked.
+- Node on this Mac is 18.15 (the project asks for 22+). Two adaptations, neither changes behaviour on Node 22: `frontend/package.json` with
+  `"type": "module"` (Node 18 does not detect ES modules in `.js` files), and the tests are run with `NODE_OPTIONS=--experimental-global-webcrypto`
+  (Node 18 has no global `crypto.subtle`). With these, all P1 tests pass with the P1 counts (bundle 24, client 39, contract 30, golden 4,
+  prepush 29, reused 6, synth 58); `export_edu_bundle.mjs --check` PASS (80 files).
+- Python on this Mac is 3.11.7; the pinned NumPy 2.5.4 needs Python >= 3.12, so `pip install -r backend/requirements-dev.txt` fails and
+  **pytest was NOT run on this machine** after P1. The backend was not changed in P2.
+
+## P2 Science workspace MVP
+
+- 2026-11-14 (local). Status: DONE. Commit: "P2 Science workspace" (see `git log`).
+- WHAT: `frontend/science.html`, `css/tokens.css`, `css/base.css`, `css/science.css`, `js/science/model.js` (pure), `js/science/main.js` (DOM),
+  `js/shared/siteHeader.js`, `js/shared/skyCanvas.js`, `frontend/package.json`, `tests/test_science_model.mjs`.
+- HOW: model.js holds every number on screen and is tested against the static bundle (36 checks, incl. that the in-browser search reproduces the
+  stored candidates). Browser run (Claude desktop browser pane, Chromium, served by `scripts/serve_frontend.py 8774`): field A loads with the
+  SYNTHETIC badge and `edu · STATIC · ok`; keys right-arrow, D, 1 work; "Run the search" -> 1 candidate in 17 ms; `?api=http://localhost:9`
+  -> "backend · unreachable", NO DATA, the failure sentence, no sequence listed (no fallback); `?seq=nope` -> "There is no sequence "nope" here.";
+  no console errors. Tests: `node scripts/run_tests.mjs` all pass; prepush PASS. NOT run: Firefox/Safari, screen reader, pytest (see above).
+- WHY: four panels in one CSS grid with named areas (controls `nav`, viewer `main`, inspector `aside`, timeline section), so selection in one
+  panel updates the others and nothing is hidden behind a step; the layout was designed fresh (3.0 layout/CSS not copied).
+- WHAT REMAINS: P3 onward. Not in P2: zoom/pan, admin token entry (P6), a colour/contrast test for the tokens (planned for P4 as `tests/test_theme.mjs`).

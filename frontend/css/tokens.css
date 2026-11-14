@@ -1,0 +1,77 @@
+/* tokens.css: every colour, type size and spacing step of both interfaces, defined once. No other file may contain a colour value
+   (tests/test_theme.mjs checks that, and the contrast of every pair listed there, in every theme).
+
+   Themes: "night" (default, both views) and "paper" (light: the worksheet, and ?theme=paper).
+   Pictures of the sky keep a dark ground in every theme: --sky-* do not change with the theme. */
+
+:root,
+:root[data-theme="night"] {
+  color-scheme: dark;
+  --bg: #0a0e16;
+  --surface: #121927;
+  --surface-2: #1a2334;
+  --border: #33415a;
+  --text: #e9eef7;
+  --text-muted: #a9b6cb;
+  --accent: #f2b443;          /* instrument amber: selection, primary action */
+  --accent-ink: #1a1203;
+  --link: #7cc7ff;
+  --ok: #4fd08a;              /* REAL data, backend ok */
+  --ok-ink: #04190d;
+  --warn: #c9a6ff;            /* SYNTHETIC data: always this violet, never mistaken for an observation */
+  --warn-ink: #1b0b33;
+  --danger: #ff8080;          /* failures */
+  --danger-ink: #2a0505;
+  --focus: #ffffff;
+}
+
+:root[data-theme="paper"] {
+  color-scheme: light;
+  --bg: #faf8f2;
+  --surface: #ffffff;
+  --surface-2: #efebe0;
+  --border: #8a8472;
+  --text: #171b22;
+  --text-muted: #4a5160;
+  --accent: #8a5400;
+  --accent-ink: #ffffff;
+  --link: #0b55a3;
+  --ok: #0d6b3a;
+  --ok-ink: #ffffff;
+  --warn: #5b2ea6;
+  --warn-ink: #ffffff;
+  --danger: #a81c1c;
+  --danger-ink: #ffffff;
+  --focus: #0b55a3;
+}
+
+:root {
+  /* the sky: the same in every theme */
+  --sky-ground: #04060b;
+  --sky-ink: #dfe7f5;
+  --mark-candidate: #f2b443;
+  --mark-truth: #4fd08a;
+  --mark-guess: #7cc7ff;
+
+  /* type: system fonts only (nothing downloaded, nothing to license) */
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Liberation Sans", Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", Consolas, "Liberation Mono", Menlo, monospace;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.25rem;
+
+  /* spacing and shape */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2.5rem;
+  --radius-sm: 3px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --hairline: 1px;
+}

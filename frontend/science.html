@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en" data-view="science" data-theme="night">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPHEREx Blink · Science workspace</title>
+  <meta name="description" content="A workspace for blinking image sequences and inspecting mover candidates with their numbers, uncertainties and provenance.">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/science.css">
+  <script type="module" src="js/science/main.js"></script>
+</head>
+<body class="workspace-page">
+  <a class="skip" href="#viewer">Skip to the viewer</a>
+
+  <header class="site-header" id="site-header">
+    <a class="brand" href="index.html">SPHEREx Blink <span class="brand-ver">4.0</span></a>
+    <nav class="view-switch" aria-label="Interface">
+      <a href="science.html" data-view-link="science" aria-current="page">Science</a>
+      <a href="learn.html" data-view-link="learn">Learn</a>
+    </nav>
+    <p class="badges">
+      <span id="badge-data" class="badge badge-data" data-kind="none">NO DATA</span>
+      <span id="badge-backend" class="badge badge-backend" data-ok="pending">backend · checking</span>
+    </p>
+  </header>
+
+  <div class="workspace" id="workspace">
+
+    <nav class="panel panel-controls" id="controls" aria-label="Controls">
+      <fieldset>
+        <legend>Sequence</legend>
+        <div id="seq-list" class="seq-list" role="radiogroup" aria-label="Sequence"></div>
+      </fieldset>
+      <fieldset>
+        <legend>View</legend>
+        <div id="mode-list" class="option-list"></div>
+      </fieldset>
+      <fieldset>
+        <legend>Playback</legend>
+        <button type="button" id="play" class="btn" aria-pressed="false">Play</button>
+        <label class="range">Speed <output id="speed-out" for="speed">2</output> images/s
+          <input type="range" id="speed" min="1" max="8" step="1" value="2">
+        </label>
+      </fieldset>
+      <fieldset>
+        <legend>Display</legend>
+        <label class="range">Stretch top <output id="top-out" for="top">120</output> σ
+          <input type="range" id="top" min="20" max="400" step="10" value="120">
+        </label>
+        <label class="check"><input type="checkbox" id="layer-candidates" checked> Candidate rings</label>
+        <label class="check"><input type="checkbox" id="layer-truth"> Injected movers <span class="muted">(synthetic answer)</span></label>
+      </fieldset>
+      <fieldset>
+        <legend>Detector</legend>
+        <button type="button" id="run-detector" class="btn">Run the search in this browser</button>
+        <p id="detector-status" class="muted" role="status"></p>
+      </fieldset>
+      <dl class="keys" aria-label="Keyboard">
+        <dt>← →</dt><dd>image</dd>
+        <dt>Space</dt><dd>play / pause</dd>
+        <dt>B D S T</dt><dd>view</dd>
+        <dt>G</dt><dd>rings</dd>
+        <dt>1-9</dt><dd>candidate</dd>
+      </dl>
+    </nav>
+
+    <main class="panel panel-viewer" id="viewer" tabindex="-1">
+      <h1 id="field-title" class="field-title">Loading…</h1>
+      <div class="sky-frame" id="sky">
+        <canvas id="sky-image" width="49" height="49" role="img" aria-label="The current image of the sequence"></canvas>
+        <canvas id="sky-overlay" class="sky-overlay" aria-hidden="true"></canvas>
+        <span id="sky-label" class="sky-label" data-kind="none"></span>
+      </div>
+      <p id="sky-caption" class="sky-caption"></p>
+      <div id="viewer-message" class="failure" role="alert" hidden></div>
+    </main>
+
+    <aside class="panel panel-inspector" id="inspector" aria-label="Inspector">
+      <section aria-labelledby="h-frame">
+        <h2 id="h-frame">Image</h2>
+        <dl id="frame-rows" class="rows"></dl>
+      </section>
+      <section aria-labelledby="h-pointer">
+        <h2 id="h-pointer">Pointer</h2>
+        <dl id="pointer-rows" class="rows" aria-live="off"></dl>
+      </section>
+      <section aria-labelledby="h-cand">
+        <h2 id="h-cand">Candidates</h2>
+        <table id="candidates" class="cand-table">
+          <caption id="cand-caption"></caption>
+          <thead><tr id="cand-head"></tr></thead>
+          <tbody id="cand-body"></tbody>
+        </table>
+        <dl id="cand-detail" class="rows"></dl>
+      </section>
+      <section aria-labelledby="h-prov">
+        <h2 id="h-prov">Provenance</h2>
+        <dl id="prov-rows" class="rows"></dl>
+      </section>
+      <section aria-labelledby="h-real">
+        <h2 id="h-real">Real results <span class="badge badge-data" data-kind="real">REAL · numbers only</span></h2>
+        <p id="real-note" class="muted"></p>
+        <table id="real-table" class="cand-table"><thead><tr><th scope="col">field</th><th scope="col">det</th><th scope="col">images</th><th scope="col">catalogue ″/yr</th><th scope="col">measured ″/yr</th><th scope="col">Δ ″/yr</th><th scope="col">σ</th></tr></thead><tbody id="real-body"></tbody></table>
+      </section>
+    </aside>
+
+    <section class="panel panel-timeline" id="timeline" aria-label="Timeline">
+      <ol id="timeline-passes" class="passes"></ol>
+      <p id="timeline-note" class="muted"></p>
+    </section>
+
+  </div>
+
+  <noscript><p class="failure">This workspace needs JavaScript. Nothing is loaded without it.</p></noscript>
+</body>
+</html>

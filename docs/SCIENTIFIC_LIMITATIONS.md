@@ -54,3 +54,9 @@ Numbers and their commands: [VALIDATION.md](VALIDATION.md).
 
 - The rate limit is per client address and in memory: it resets when the server restarts and is per instance if several run.
 - A provenance record says what was used and when; it does not say the result is right. A header check does not authenticate where a file came from; the SHA-256 of the original does.
+
+## Science workspace
+
+- The pointer's RA/Dec uses the flat-sky mapping of the grid (`pixelToSky`); it is not a full WCS of an original exposure.
+- The picture is an asinh-stretched display product; the pointer value and every measurement read the float pixels, never the picture.
+- Difference mode subtracts the mean of the other survey passes; a mover that stays put within one pass is not subtracted away by its own pass, but a mover that crosses its own position in another pass leaves a residual.
