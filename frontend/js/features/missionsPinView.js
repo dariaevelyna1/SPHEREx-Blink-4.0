@@ -311,7 +311,7 @@ export function setupPinBoard({ getCandidate, getContext }) {
     for (const p of pins) {
       const li = document.createElement("li");
       li.className = "pin-item" + (p.id === openId ? " is-open" : "");
-      li.innerHTML = cardHtml(p) + `<p class="pb-popup-actions"><button type="button" class="btn btn-small" data-act="locate" data-id="${esc(p.id)}">📍 Show on map</button> <a class="btn btn-small" href="${esc(fieldLink(p))}">Open this field</a> ${p.shared ? `<span class="pb-chip">🌍 shared · permanent</span>` : p.pending ? `<span class="pb-chip">⏳ waiting to be sent</span>` : `<button type="button" class="btn btn-small" data-act="remove" data-id="${esc(p.id)}">Remove</button>`}</p>`;
+      li.innerHTML = cardHtml(p) + `<p class="pb-popup-actions"><button type="button" class="btn btn-small" data-act="locate" data-id="${esc(p.id)}">📍 Show on map</button> <a class="btn btn-small" href="${esc(fieldLink(p))}">Open this field</a> ${p.shared ? `<span class="pb-chip">🌍 shared · permanent</span>` : p.pending ? `<span class="pb-chip">⏳ waiting to be sent</span>` : `${shared ? `<button type="button" class="btn btn-small btn-primary" data-act="share" data-id="${esc(p.id)}">🌍 Share with everyone</button> ` : ""}<span class="pb-chip">💾 only in this browser</span> <button type="button" class="btn btn-small" data-act="remove" data-id="${esc(p.id)}">Remove</button>`}</p>`;
       list.appendChild(li);
     }
     verifyInto(list);
@@ -358,6 +358,14 @@ export function setupPinBoard({ getCandidate, getContext }) {
   $("pin-list").addEventListener("click", (e) => {
     const b = e.target.closest("[data-act]");
     if (!b) return;
+    if (b.dataset.act === "share") {
+      const p = pins.find((x) => x.id === b.dataset.id);
+      if (!p || !confirm(`Share this pin with everyone? “${pinTag(p)}” and its position become public and permanent.`)) return;
+      p.pending = true; savePins(store, pins);
+      $("pin-status").textContent = "Sending the pin to the shared board…";
+      sync().then(() => { $("pin-status").textContent = p.pending ? "The shared board did not answer; the pin will be sent later." : `🌍 Shared with everyone: ${pinTag(p)}.`; });
+      return;
+    }
     if (b.dataset.act === "remove") { pins = removePin(pins, b.dataset.id); if (openId === b.dataset.id) openId = null; savePins(store, pins); render(); }
     if (b.dataset.act === "locate") {
       openId = b.dataset.id;
