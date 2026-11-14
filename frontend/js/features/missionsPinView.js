@@ -32,7 +32,7 @@ export function setupMissions() {
         const a = document.createElement("a");
         a.href = missionHref(m, location.search);
         a.textContent = `${progress.completed.includes(m.id) ? "✓ " : ""}${m.title}`;
-        li.append(a, ` · level ${m.tier} · ${m.steps.length} steps`);
+        li.append(a, ` · level ${m.tier} · ${m.steps.length} steps${m.needsReal ? " · 🛰️ real data only" : ""}`);
         ul.appendChild(li);
       }
       det.append(sum, ul);
@@ -43,7 +43,7 @@ export function setupMissions() {
   function render() {
     const m = current;
     const done = progress.completed.includes(m.id);
-    $("mission-category").textContent = `${m.category} · level ${m.tier} · ${m.steps.length} steps`;
+    $("mission-category").textContent = `${m.category} · level ${m.tier} · ${m.steps.length} steps${m.needsReal ? " · 🛰️ needs real data" : ""}`;
     $("mission-title").textContent = (done ? "✓ " : "") + m.title;
     $("mission-story").textContent = m.story;
     $("mission-why").textContent = missionWhy(m);

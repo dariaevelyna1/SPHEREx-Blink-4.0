@@ -43,8 +43,11 @@ const COUNT = measure("How many candidates did the search list? Count them and t
 const B = { query: BARNARD };
 const at = (hash) => ({ query: BARNARD, hash });
 
+// Missions whose tools work only on real SPHEREx data served by the backend (?data=api): on the synthetic demo the tool explains why it cannot run.
+export const REAL_ONLY = new Set(["basics-flags", "blink-asteroid-check", "sky-catalogue-layer", "sky-irsa", "sky-footprints", "px-injection", "px-injection-map"]);
+
 const M = (id, category, tier, title, story, start, steps, successFeedback) => ({
-  id, category, tier, title, story,
+  id, category, tier, title, story, needsReal: REAL_ONLY.has(id),
   targetType: start.hash ? `workspace panel ${start.hash}` : "preset coordinates (Barnard's Star field)",
   start, objective: steps.map((s) => s.does).join(" "), steps, successFeedback,
 });
@@ -450,7 +453,8 @@ export function checkMeasurement(check, typed, truth) {
 }
 
 /** Pick a mission at random. `rng` returns [0,1) (Math.random by default); `avoidIds` are skipped when anything else is left. */
-export function pickRandomMission(rng = Math.random, avoidIds = [], db = missionsDatabase) {
+export function pickRandomMission(rng = Math.random, avoidIds = [], db = missionsDatabase, { real = false } = {}) {
+  db = real ? db : db.filter((m) => !m.needsReal);
   if (!db.length) return null;
   const avoid = new Set(avoidIds);
   const pool = db.filter((m) => !avoid.has(m.id));

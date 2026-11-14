@@ -17,7 +17,8 @@ export function startMissionRunner({ getCandidate = () => null, getCount = () =>
   const mission = id && findMission(id);
   if (!mission) return null;
 
-  let step = 0, marked = null, note = "", wrong = "", collapsed = false, started = false;
+  let step = 0, marked = null, note = "", wrong = "", collapsed = false, started = false, hint = "";
+  const REAL = new URLSearchParams(location.search).get("data") === "api";
   const box = document.createElement("aside");
   box.className = "mission-runner";
   box.setAttribute("aria-label", "Mission console");
@@ -42,7 +43,7 @@ export function startMissionRunner({ getCandidate = () => null, getCount = () =>
     const m = s?.check.measure;
     const progress = loadProgress(store);
     const xp = totalXp(progress);
-    const next = pickRandomMission(Math.random, [...progress.completed, mission.id]);
+    const next = pickRandomMission(Math.random, [...progress.completed, mission.id], undefined, { real: REAL });
     box.classList.toggle("is-collapsed", collapsed);
     box.classList.toggle("is-won", done);
     box.innerHTML = `
@@ -55,12 +56,14 @@ export function startMissionRunner({ getCandidate = () => null, getCount = () =>
       <div class="mr-body">
       ${!started ? `<p class="mr-section">📜 Mission briefing</p><p class="mr-story">${esc(mission.story)}</p>
         <p class="mr-section">🔭 Why it matters</p><p class="mr-why-text">${esc(missionWhy(mission))}</p>
+        ${mission.needsReal && !REAL ? `<p class="mr-warn">🛰️ <strong>Needs real SPHEREx data.</strong> This tool works only when the page runs with the backend on real images (Learn Mode → “Search the real sky”). On this synthetic demo it explains why it cannot run, so the mission cannot be finished here.</p>` : ""}
         <p class="mr-section">🧭 What you will do · ${n} steps</p>
         <ol class="mr-steps mr-steps-preview">${mission.steps.map((x, i) => `<li><span class="mr-dot" aria-hidden="true">${i + 1}</span><span>${esc(x.does)}</span></li>`).join("")}</ol>
-        <p class="mr-actions"><button type="button" class="btn btn-small btn-primary" data-act="start">🚀 Start the mission</button> <button type="button" class="btn btn-small" data-act="quit">Not now</button></p>
+        <p class="mr-actions">${mission.needsReal && !REAL ? `<a class="btn btn-small btn-primary" href="${esc(missionHref(next, location.search))}">Try another mission: ${esc(next.title)} →</a> <button type="button" class="btn btn-small" data-act="start">Look anyway</button>` : `<button type="button" class="btn btn-small btn-primary" data-act="start">🚀 Start the mission</button> <button type="button" class="btn btn-small" data-act="quit">Not now</button>`}</p>
       </div>` : `
       ${note ? `<p class="mr-note" role="status"><strong>What just happened:</strong> ${esc(note)}</p>` : ""}
       <ol class="mr-steps">${items}</ol>
+      ${hint && !done ? `<p class="mr-hint" role="status">${esc(hint)}</p>` : ""}
       ${!done && stepWhy(s) ? `<p class="mr-why"><strong>Why this step?</strong> ${esc(stepWhy(s))}</p>` : ""}
       ${m ? `<form class="mr-measure" data-act="measure"><label for="mr-input">${esc(s.does)}</label>
           <div class="mr-measure-row"><input id="mr-input" autocomplete="off" inputmode="${m.field === "compass" ? "text" : "decimal"}" placeholder="${m.unit ? "value in " + esc(m.unit) : "your answer"}">
@@ -78,6 +81,7 @@ export function startMissionRunner({ getCandidate = () => null, getCount = () =>
 
   function advance(learnt) {
     note = learnt ?? "";
+    hint = "";
     wrong = "";
     step++;
     if (step >= mission.steps.length) {
@@ -117,12 +121,32 @@ export function startMissionRunner({ getCandidate = () => null, getCount = () =>
       advance(`Correct: the page measured ${shown}${m.unit}. ${m.field === "speedArcsecPerYear" ? "At that rate it would cross the full Moon (about 1800″) in " + Math.round(1800 / expected) + " years." : ""}`);
     } else { wrong = `Not quite. ${m.hint}`; render(); box.querySelector("#mr-input")?.focus(); }
   });
+  /** Scroll to the control of the step; if it is hidden or greyed out, go to where it will appear and say why. */
+  function showWhere() {
+    highlight();
+    const sel = current()?.check.on;
+    if (marked && !marked.matches(":disabled") && !marked.querySelector?.(":disabled")) { hint = ""; render(); marked.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+    const el = sel && document.querySelector(sel);
+    if (!el) { hint = "This control is not on the page yet: finish the previous steps first."; render(); return; }
+    for (let d = el.closest("details:not([open])"); d; d = d.parentElement?.closest("details:not([open])")) d.open = true;
+    let spot = el;
+    while (spot && !visible(spot)) spot = spot.parentElement;
+    const section = (spot ?? el).closest("section, .panel") ?? spot;
+    const status = [...(section?.querySelectorAll("[role=status]") ?? [])]          // the status line just before the control: why it is not there
+      .filter((n) => visible(n) && n.textContent.trim() && (n.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING)).pop()?.textContent.trim();
+    hint = (el.disabled || el.matches(":disabled") ? "This control is greyed out for now. It becomes available after the earlier steps (for example after loading images, running a search or selecting a candidate)." : "This control is hidden until the result of the previous step is ready, so you see the place where it will appear.")
+      + (mission.needsReal && !REAL ? " This mission needs real SPHEREx data: on the synthetic demo the tool cannot run." : "")
+      + (status ? ` The page says: “${status.slice(0, 220)}”` : "");
+    render();
+    (spot ?? section)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
   box.addEventListener("click", (e) => {
     const act = e.target.closest("[data-act]")?.dataset.act;
     if (act === "quit") {
       clearInterval(timer); marked?.classList.remove("mission-target"); box.remove();
       const u = new URL(location.href); u.searchParams.delete("mission"); history.replaceState(null, "", u);
-    } else if (act === "show") { highlight(); marked?.scrollIntoView({ behavior: "smooth", block: "center" }); }
+    } else if (act === "show") showWhere();
     else if (act === "start") { started = true; render(); marked?.scrollIntoView({ behavior: "smooth", block: "center" }); }
     else if (act === "collapse") { collapsed = !collapsed; render(); }
   });

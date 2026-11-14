@@ -1454,6 +1454,8 @@ html[data-theme] .site-footer { border-top: 1px solid var(--border); background:
 .mr-why-text { margin: 2px 0 6px; font-size: .9rem; }
 .mr-steps-preview li { color: var(--text-muted); }
 .mr-why { font-size: .85rem; margin: 6px 0; padding: 8px 10px; border-radius: 10px; background: var(--raised); border: 1px solid var(--border); }
+.mr-hint { font-size: .85rem; margin: 6px 0; padding: 8px 10px; border-radius: 10px; border: 1px dashed var(--warn); background: rgb(var(--warn-rgb) / .1); }
+.mr-warn { font-size: .86rem; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--warn); background: rgb(var(--warn-rgb) / .12); }
 .mr-note { font-size: .86rem; margin: 8px 0; padding: 8px 10px; border-radius: 10px; background: rgb(var(--accent-rgb) / .1); border-left: 3px solid var(--accent); animation: mr-in .35s var(--ease); }
 .mr-steps { list-style: none; padding: 0; margin: 8px 0; display: grid; gap: 6px; }
 .mr-steps li { display: flex; gap: 8px; align-items: flex-start; font-size: .9rem; color: var(--text-faint); }

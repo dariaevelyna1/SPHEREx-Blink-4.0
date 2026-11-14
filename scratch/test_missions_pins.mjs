@@ -29,6 +29,7 @@ check("measurement: speed within 5 %, wrong value refused", checkMeasurement({ f
 check("measurement: comma decimals, compass letters, integers, count", checkMeasurement({ field: "speedArcsecPerYear", tol: 0.05 }, "10,3″/yr", c0).ok && checkMeasurement({ field: "compass" }, " n ", c0).ok && checkMeasurement({ field: "nDet", tol: 0 }, "8", c0).ok && !checkMeasurement({ field: "nDet", tol: 0 }, "7", c0).ok && checkMeasurement({ field: "count", tol: 0 }, "2", { count: 2 }).ok);
 check("XP and ranks", totalXp({ completed: ["blink-first-look", "proper-speed-trap"] }) === 150 && rankFor(0) === "Cadet Observer" && rankFor(4000) === "Planet X Hunter");
 check("random pick uses the rng", pickRandomMission(() => 0).id === missionsDatabase[0].id && pickRandomMission(() => 0.9999).id === missionsDatabase.at(-1).id);
+check("real-data-only missions are not picked on the demo", [...Array(500)].every(() => !pickRandomMission().needsReal) && missionsDatabase.filter((m) => m.needsReal).length === 7);
 check("random pick avoids recent ones", pickRandomMission(() => 0, [missionsDatabase[0].id]).id === missionsDatabase[1].id);
 check("random pick falls back when all avoided", Boolean(pickRandomMission(Math.random, missionsDatabase.map((m) => m.id))));
 const seen = new Set(); for (let i = 0; i < 2000; i++) seen.add(pickRandomMission().id);
