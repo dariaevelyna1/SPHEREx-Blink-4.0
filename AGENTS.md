@@ -1,40 +1,67 @@
-# AGENTS.md: instructions for anyone (human or agent) working on SPHEREx Blink 4.0
+# Developing SPHEREx Blink
 
-Read the first line of `WORKLOG.md` (the next step), then its last section, then `git status` and `git log`. The repository wins over any note.
+Work in this checkout. This is SPHEREx-Blink-4.0, based on the 3.0 code at commit `831a9cd`; it is a separate worktree on `codex/blink4-education`. The current user requested that this version be developed from the 3.0 baseline. Read docs/CODEX_PROGRESS.md, docs/IMPLEMENTATION_ROADMAP.md and docs/FEATURE_STATUS.md, then verify HEAD and the working tree. Historical instructions imported below describe earlier repositories; the current user's destination and scope take precedence. Do not publish unless the user asks.
+
+Serve frontend/ over HTTP. Preserve index.html, results.html, query parameters and embedded mode. Keep Science Mode tools and analysis intact. The default workspace is synthetic and must remain explicitly labelled. Learn Mode progress is local to the browser; do not imply cloud sync or a connected AI model. Read docs/VALIDATION.md before changing scientific methods, units, or thresholds.
+
+Run every scratch/test_*.mjs with Node and run python -m pytest backend -q with backend/requirements-dev.txt installed. Run the browser regression for navigation changes. Record commands, fixture provenance and untested paths in the progress log.
+
+---
+
+<!-- Everything below comes from the branch blink-2.0 of mateibut/SPHEREx, a second line of Blink 2.0 work that was merged into this repository on 10 Nov 2026. Where the two halves describe the same thing differently, they describe two different implementations: see docs/MERGE_NOTES.md. -->
+
+# AGENTS.md: durable instructions for anyone (human or agent) working on SPHEREx Blink
+
+Read this, then `docs/CODEX_PROGRESS.md` (where the work stands), then `git status` and `git log`. Do not trust a note that the repository
+contradicts; check.
 
 ## What this is
 
-Two interfaces (Science workspace, Learn narrative) over one data contract (`docs/DATA_CONTRACT.md`) and one FastAPI codebase with two profiles
-(`edu` static/synthetic, `full` processed real sequences from a store). Vanilla ES modules in `frontend/` (no build, no npm), Python in `backend/`.
+A NASA Space Apps 2026 project ("Planet X and SPHEREx"): a blink comparator and mover/source finder for SPHEREx infrared images. Vanilla ES
+modules in `frontend/` (no build step, no npm), a FastAPI + astropy backend in `backend/` (optional), Node and pytest tests. Map of the code:
+`docs/ARCHITECTURE.md`. What works and what does not: `docs/FEATURE_STATUS.md`. Limits: `docs/SCIENTIFIC_LIMITATIONS.md`. Plan: `docs/IMPLEMENTATION_ROADMAP.md`.
 
 ## Rules that must not be broken
 
-1. **Real or synthetic, always labelled**, in both views. Never present synthetic or model output as an observation. Never fall back silently from real to synthetic: show the failure.
-2. **Real SPHEREx files and pixels are never committed or published.** `backend/data/` and caches are git-ignored. Public pages and the public backend show derived numbers only.
-3. **No invented science**: no made-up FITS keywords, endpoints, units, catalogue matches or validation numbers. A number in a document comes from a command that can be re-run. A fact from memory is marked `[unverified]`. A candidate is a lead, never a discovery.
-4. **Do not download FITS files and do not list, read or write any cloud bucket** without the author's explicit yes.
-5. **Never `git push`**, force-push, delete branches, rewrite history, change visibility, deploy or publish. Commit locally only.
-6. **Honest tests**: never mark an unrun test as passing; never weaken a check to make it pass.
-7. **Secrets**: never write, print, log or ask for a password, key, token or service-account file. The repository holds only `.env.example`. No e-mail addresses in files.
-8. Colours only through the CSS tokens in `frontend/css/tokens.css`. Analysis code is pure (no DOM, no network, `fetch` injectable).
-9. The two views share data modules, never layout: `tests/test_structure.mjs` enforces it.
-10. Files reused from 3.0 (`frontend/js/core/`) are not edited: `tests/test_reused.mjs` pins their SHA-256.
-11. Every asset and library has a `CREDITS.md` entry before it is committed.
-12. Keep **archive retrieval**, **scientific processing** and **storage** as three distinct things in code, documents and interface wording.
+1. **Real or synthetic, always labelled.** Never present synthetic data, a simulation or a model output as an observation. Never fall back
+   silently from real data to synthetic: show what failed. Real SPHEREx files and pixels are **never committed or published**
+   (`backend/data/` is git-ignored; the data licence is unchecked). The results page shows derived numbers only.
+2. **No invented science.** No made-up FITS columns, endpoints, units, catalogue matches or validation numbers. A number in the docs comes from a
+   command that can be re-run (`docs/VALIDATION.md` names it). Facts written from memory are marked as such. A candidate is a lead, never a discovery.
+3. **Do not download new FITS files** without the author's explicit yes (file, source, size first). Catalogue queries (SIMBAD, Gaia, IRSA TAP, SkyBoT) are fine.
+4. **Never `git push`, force-push, delete branches or touch `main` history.** The author pushes. Work is on the branch `blink-2.0`; `main` is the reference.
+   Commit only when asked or when a task says to; messages end with the co-author line the tool gives you.
+5. **Keep it working.** Existing URLs (`?ra=&dec=&fov=&det=&mode=`, `?data=api&api=`, `?embed=1`) and existing features stay. Run the tests before and after.
+6. **Honest tests.** Never mark a test as passing without running it; never weaken a check to make it pass (change it only when the behaviour it
+   encodes was meant to change, and say so).
 
 ## Commands
 
 ```bash
-node scripts/run_tests.mjs                              # all Node tests, then the prepush check
-node scripts/prepush_check.mjs                          # the public-repository gate alone
-backend/.venv/Scripts/python.exe -m pytest backend -q   # backend tests (py is the launcher; python is a broken alias on this machine)
-py scripts/serve_frontend.py 8765                       # the site, no stale cache
-node scripts/export_edu_bundle.mjs                      # remake the synthetic bundle (seeded; the output must not change unless meant)
+for f in scratch/test_*.mjs; do node "$f" | tail -1; done          # Node tests: PASS/FAIL lines, exit code != 0 on failure
+backend/.venv/Scripts/python.exe -m pytest backend -q               # backend tests (Python 3.14 venv; `py` is the launcher, `python` is a broken alias)
+node scratch/e2e_smoke.mjs                                          # the page in headless Chrome (synthetic demo, Node 22+, no install; not part of the test_*.mjs set); docs/BENCHMARKS.md section 3
+node scratch/benchmark.mjs --check                                  # the digests of three searches against scratch/benchmark_baseline.json; --write only when a scientific change was meant
+py scripts/serve_frontend.py 8765                                   # frontend, no stale cache (also .claude/launch.json "frontend")
+node scratch/calibrate_astrometry.mjs                               # the injection tables of VALIDATION §15 (a minute); scratch/check_astrometry_real.mjs: the same errors on the real fields (needs backend-real)
+node scratch/make_results_sources.mjs                               # remake frontend/data/real_sources.json (needs "backend-real" and internet): do it when discovery.js VERSION or a threshold changes, test_results.mjs fails on a stale file
+# real-data runs need a real-only backend:  SPHEREX_DATA_DIR=backend/data/real  uvicorn on port 8003  ("backend-real" in .claude/launch.json),
+# then e.g.  node scratch/validate_discovery.mjs --mode real --field "Barnard D2"      (VALIDATION.md §14)
 ```
+
+Open the page with real data: `http://localhost:8765/?data=api&api=http://localhost:8003&ra=269.4462&dec=4.769&fov=5&det=D2`.
+`?theme=light|observatory|classic|deep-space` picks a colour theme for one visit.
 
 ## Conventions
 
-- Interface text and documents in English; Learn also has a Romanian string table. The author chats in Romanian.
-- New feature = code + tests + a line in `docs/FEATURE_STATUS.md` + limits in `docs/SCIENTIFIC_LIMITATIONS.md`; a measured claim goes in `docs/VALIDATION.md` with its command.
-- Windows: write files with the editor tool, not shell heredocs.
-- After each part: run the tests and the prepush check, update `WORKLOG.md`, one local commit.
+- UI text and documents in **English**; the author chats in Romanian (answer in Romanian, explain astronomy basics, say what is certain and what is from memory).
+- Colours only through the CSS tokens in `frontend/css/styles.css` section 1 (`scratch/test_theme.mjs` checks contrast per theme). Charts keep a dark ground in every theme.
+- Analysis code is **pure** (no DOM, no network, `fetch` injectable) in `frontend/js/features/`, so Node can test it; the DOM part is a separate module.
+- New feature = code + tests (Node or pytest) + a line in `docs/FEATURE_STATUS.md` + limits in `docs/SCIENTIFIC_LIMITATIONS.md`; a measured claim goes in `docs/VALIDATION.md` with its command.
+- Scratch scripts that need real files print a report and are not run in CI. Windows: Git Bash heredocs choke on some quotes; write files with the editor tool.
+- Libraries are added only with a pinned version and a licence line in `CREDITS.md`; nothing is deployed or published without the author asking.
+
+## Open decisions (the author's, not code's)
+
+Where Blink 2.0 lives (separate repository or this branch); eligibility of work begun before the hackathon (`docs/TODO.md` §1); the data licence and
+acknowledgement wording (`CREDITS.md`).

@@ -1,8 +1,7 @@
-# SPHEREx Blink 4.0 backend. Pinned to the versions the tests ran with (Python 3.14, 2026-11-14). Licences: CREDITS.md.
-fastapi==0.162.7
-uvicorn==0.54.0
-# Scientific processing (offline job) only; the serving code does not import them.
-numpy==2.5.4
-astropy==8.0.2
-# Google Cloud Storage store (full profile with GCS_BUCKET set). Auth: Application Default Credentials.
-google-cloud-storage==3.17.1
+# Backend for SPHEREx Blink (step 7). Tested with Python 3.14.
+fastapi>=0.115
+uvicorn>=0.30
+astropy>=7.1        # first astropy line with Python 3.14 wheels
+numpy>=2.1
+pillow>=11.0
+# pyvo – added in step 8, once we know the IRSA access method (SIA/TAP/cutout service)

@@ -1,145 +1,226 @@
-"""SPHEREx Blink 4.0 backend: SERVING. One codebase, two profiles (BLINK_PROFILE=edu | full). Contract: docs/DATA_CONTRACT.md.
+"""SPHEREx Blink backend.
 
-Run (from the repository root):
-    backend/.venv/Scripts/python.exe -m uvicorn app:app --app-dir backend --port 8010     (macOS/Linux: backend/.venv/bin/python)
+Run (from the backend/ folder):
+    .venv\\Scripts\\python.exe -m uvicorn app:app --port 8001 --reload
 
-Every route is read-only over products that are already in the store. Archive retrieval and scientific processing are command-line jobs
-(blink/archive, blink/processing), never endpoints. Configuration comes from environment variables only (.env.example).
+Endpoints
+    GET /api/cutouts?ra=&dec=&fov=&det=   -> { "frames": Frame[] }   (same contract as the mock)
+    GET /api/photometry?ra=&dec=&det=     -> { "points": Point[] }  (spectrum / light curve)
+    GET /api/hips/<survey>/<file>         -> IRSA HiPS tiles relayed with CORS (sky map; allowlist)
+    GET /api/catalogue?cat=&ra=&dec=&radius=[&minpm=] -> { rows: [...], truncated } known sources (2mass | allwise | gaia) for the cross-match
+    GET /api/survey?ra=&dec=&radius=[&det=&limit=] -> { planes: [...] } the SPHEREx survey images that touch a circle (IRSA table spherex.plane, a live query)
+    GET /api/health                       -> indexed files + files that failed to read
+    GET /cutouts/<file>.png               -> the cached PNGs referenced by imageUrl
+    GET /                                 -> the frontend itself (optional, same origin)
 """
 
 from __future__ import annotations
 
-import hmac
+from collections import defaultdict
+from pathlib import Path
 
+import numpy as np
 from fastapi import FastAPI, Query, Request
-from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.responses import JSONResponse, Response
+from fastapi.staticfiles import StaticFiles
 
-from blink import CODE_VERSION
-from blink.approved import ID_RE, Approved, ApprovedError, load_approved
-from blink.catalog import Catalog, public_sequence, summary_of
-from blink.config import Settings
-from blink.limits import Guard, RateLimiter
-from blink.store import DataStore, LocalDirStore, StoreError
+from spherex import cache, catalogues, hips_proxy, survey
+from spherex.cutout import cutout, flag_summary, target_wcs
+from spherex.floatdata import float_cutout_bytes, mask_cutout_bytes
+from spherex.footprints import footprints
+from spherex.photometry import measure
+from spherex.query import LocalArchive
+from spherex.observations import observations
+from spherex.stretch import STRETCH_VERSION, flags_to_png, shared_stretch, to_png
 
-NOT_FOUND = "No such sequence here."          # the same sentence for "unknown" and "not approved": the difference is not public
+FRONTEND_DIR = Path(__file__).resolve().parents[1] / "frontend"
+FOV_MIN, FOV_MAX = 1.0, 30.0
+MIN_VALID_FRACTION = 0.5     # skip frames where less than half the cutout has data (edge hits)
 
+app = FastAPI(title="SPHEREx Blink API", version="0.7")
 
-def make_store(settings: Settings) -> DataStore:
-    if settings.profile == "edu":
-        return LocalDirStore(settings.edu_bundle_dir)
-    if settings.gcs_bucket:
-        from blink.store.gcs import GcsStore          # imported only when a bucket is configured: the edu profile needs no cloud library
-        from blink.store.cache import CachedStore
-        return CachedStore(GcsStore(settings.gcs_bucket, settings.gcs_prefix, settings.gcp_project or None), settings.cache_dir, settings.cache_max_mb)
-    return LocalDirStore(settings.data_dir)
+# The frontend may run on another port (python -m http.server) and reads PNG pixels on a
+# <canvas> (img.crossOrigin = "anonymous"), so BOTH the JSON and the PNGs need CORS headers.
+# The middleware wraps the whole app, mounted static files included.
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"])
 
-
-def create_app(settings: Settings | None = None, store: DataStore | None = None, approved: list[Approved] | None = None) -> FastAPI:
-    settings = settings or Settings.from_env()
-    store = store if store is not None else make_store(settings)
-    approved_problem = None
-    if approved is None and settings.profile == "full":
-        try:
-            approved = load_approved(settings.approved_file)
-        except ApprovedError as exc:
-            approved, approved_problem = [], str(exc)
-    catalog = Catalog(settings, store, approved)
-
-    app = FastAPI(title="SPHEREx Blink API", version=CODE_VERSION, docs_url=None, redoc_url=None, openapi_url=None)
-    app.state.settings, app.state.catalog = settings, catalog
-    # Added first = innermost. CORS is added last so that a refusal by the guard still carries the CORS headers.
-    app.add_middleware(Guard, limiter=RateLimiter(settings.rate_limit_per_minute), max_concurrent=settings.max_concurrent,
-                       timeout_s=settings.request_timeout_s, trust_forwarded_for=settings.trust_forwarded_for)
-    app.add_middleware(CORSMiddleware, allow_origins=list(settings.cors_origins), allow_methods=["GET", "POST"], allow_headers=["Authorization"])
-
-    def not_found() -> JSONResponse:
-        return JSONResponse(status_code=404, content={"detail": NOT_FOUND})
-
-    @app.get("/api/health")
-    def health():
-        doc = catalog.health()
-        if approved_problem and not doc["problem"]:
-            doc["problem"] = approved_problem
-        return doc
-
-    @app.get("/api/sequences")
-    def sequences(limit: int = Query(20, ge=1, le=10_000), offset: int = Query(0, ge=0, le=1_000_000)):
-        limit = min(limit, settings.max_page_size)                 # the pagination limit is the server's, whatever is asked
-        rows = catalog.summaries()
-        return {"sequences": rows[offset:offset + limit], "total": len(rows), "limit": limit, "offset": offset}
-
-    @app.get("/api/sequences/{sequence_id}")
-    def sequence(sequence_id: str, request: Request):
-        doc = catalog.sequence(sequence_id) if ID_RE.match(sequence_id) else None
-        return public_sequence(doc, str(request.base_url), catalog.pixels_served()) if doc else not_found()
-
-    def frame_bytes(sequence_id: str, frame_id: str, kind: str):
-        if not (ID_RE.match(sequence_id) and ID_RE.match(frame_id)) or catalog.sequence(sequence_id) is None:
-            return not_found()
-        if not catalog.pixels_served():
-            return JSONResponse(status_code=403, content={"detail": "This backend serves derived numbers only: pixels are not served."})
-        stream = catalog.open_frame(sequence_id, frame_id, kind)
-        if stream is None:
-            return JSONResponse(status_code=404, content={"detail": "No such frame in this sequence."})
-        return StreamingResponse(stream, media_type="application/octet-stream", headers={"Cache-Control": "public, max-age=3600"})
-
-    @app.get("/api/sequences/{sequence_id}/frames/{frame_id}/data")
-    def frame_data(sequence_id: str, frame_id: str):
-        return frame_bytes(sequence_id, frame_id, "data")
-
-    @app.get("/api/sequences/{sequence_id}/frames/{frame_id}/mask")
-    def frame_mask(sequence_id: str, frame_id: str):
-        return frame_bytes(sequence_id, frame_id, "mask")
-
-    @app.get("/api/sequences/{sequence_id}/candidates")
-    def candidates(sequence_id: str):
-        if not ID_RE.match(sequence_id) or catalog.sequence(sequence_id) is None:
-            return not_found()
-        doc = catalog.candidates(sequence_id)
-        return doc if doc else JSONResponse(status_code=404, content={"detail": "No stored candidates for this sequence."})
-
-    @app.get("/api/cutouts")
-    def cutouts(request: Request, ra: float = Query(..., ge=0, lt=360), dec: float = Query(..., ge=-90, le=90),
-                fov: float = Query(5, ge=1, le=30), det: str = Query("all", max_length=8)):
-        """Compatibility with the 3.0 route: the frames of the public sequence that covers (ra, dec). `fov` is accepted and ignored
-        (a product has the size it was processed with); an unknown place gives { "frames": [] } as in 3.0."""
-        doc = catalog.covering(ra, dec, det)
-        return {"frames": public_sequence(doc, str(request.base_url), catalog.pixels_served())["frames"] if doc else []}
-
-    @app.post("/api/admin/reload")
-    def admin_reload(request: Request):
-        """Re-read the store index and the allow-list. Protected by a bearer token that exists only in the server's environment."""
-        if not settings.admin_token:
-            return JSONResponse(status_code=403, content={"detail": "Admin endpoints are disabled on this server."})
-        given = request.headers.get("authorization", "")
-        if not (given.startswith("Bearer ") and hmac.compare_digest(given[7:].encode(), settings.admin_token.encode())):
-            return JSONResponse(status_code=403, content={"detail": "Not authorised."})
-        if hasattr(store, "clear"):
-            store.clear()                                    # the read-through cache: products may have been rewritten
-        try:
-            catalog.reload(load_approved(settings.approved_file) if settings.profile == "full" else None)
-        except ApprovedError as exc:
-            return JSONResponse(status_code=400, content={"detail": str(exc)})
-        return {"reloaded": True, "sequenceCount": len(catalog.summaries())}
-
-    @app.exception_handler(StoreError)
-    def store_error(_request, _exc):
-        return JSONResponse(status_code=503, content={"detail": "The data store could not be read."})
-
-    @app.exception_handler(RequestValidationError)
-    def bad_input(_request, exc):
-        first = exc.errors()[0] if exc.errors() else {}
-        where = ".".join(str(p) for p in first.get("loc", [])[1:])
-        return JSONResponse(status_code=400, content={"detail": f"Bad value for {where or 'a parameter'}: {first.get('msg', 'invalid')}."})
-
-    @app.exception_handler(StarletteHTTPException)
-    def http_error(_request, exc):
-        return JSONResponse(status_code=exc.status_code, content={"detail": NOT_FOUND if exc.status_code == 404 else str(exc.detail)})
-
-    return app
+archive = LocalArchive()
 
 
-app = create_app()
+@app.get("/api/health")
+def health():
+    archive.refresh()
+    return {"dataDir": str(archive.root), "indexedFiles": len(archive._index), "usedFrames": len(archive.frames()),
+            "duplicateFiles": {k.name: v.name for k, v in archive.duplicates.items()},          # exact copies of another file: not used, so that one exposure is not counted twice
+            "unreadableFiles": {str(k): v for k, v in archive.errors.items()}}
+
+
+@app.get("/api/observations")
+def observation_search(ra: float = Query(..., ge=0, lt=360), dec: float = Query(..., ge=-90, le=90),
+                       fov: float = Query(5, ge=1, le=30), collection: str = "spherex_qr2"):
+    """IRSA SIA2 product metadata and ICRS footprint vertices, without downloading FITS."""
+    try:
+        return observations(ra, dec, fov, collection)
+    except (OSError, UnicodeError):
+        return JSONResponse(status_code=502, content={"detail": "IRSA image metadata is unavailable. Retry the search."})
+@app.get("/api/footprints")
+def footprints_endpoint(det: str = Query("all", description='"all" or a detector name like "D3"')):
+    """Where the images on this machine are on the sky (the four corners of each, from its own WCS). No file names, no paths: see spherex/footprints.py."""
+    archive.refresh()
+    return {"footprints": footprints(archive.frames(), det),
+            "note": "The footprints of the image files this backend has, not of the SPHEREx survey."}
+
+
+@app.get("/api/cutouts")
+def cutouts(
+    request: Request,
+    ra: float = Query(..., ge=0, lt=360, description="degrees, ICRS"),
+    dec: float = Query(..., ge=-90, le=90, description="degrees, ICRS"),
+    fov: float = Query(5, ge=FOV_MIN, le=FOV_MAX, description="arcmin"),
+    det: str = Query("all", description='"all" or a detector name like "D3"'),
+):
+    frames = archive.find(ra, dec, det)
+    if not frames:
+        return {"frames": []}
+
+    # One common pixel scale for every frame -> identical grids -> stars stay put in the blink.
+    scale = float(np.median([f.pixel_scale_arcsec for f in frames]))
+    key = cache.make_key(round(ra, 6), round(dec, 6), round(fov, 3), det, STRETCH_VERSION, "provenance-v1",
+                         [(str(f.path), f.mtime) for f in frames])
+
+    result = cache.load(key)
+    if result is None:
+        result = _build(frames, ra, dec, fov, scale, key)
+        cache.save(key, result)
+
+    base = str(request.base_url)            # e.g. "http://localhost:8001/"
+    return {"frames": [{**f, "imageUrl": base + f["imageUrl"],
+                        "flagsUrl": base + f["flagsUrl"] if f.get("flagsUrl") else None,
+                        "dataUrl": base + f["dataUrl"] if f.get("dataUrl") else None,
+                        "maskUrl": base + f["maskUrl"] if f.get("maskUrl") else None}
+                       for f in result]}
+
+
+@app.get("/api/photometry")
+def photometry(
+    ra: float = Query(..., ge=0, lt=360),
+    dec: float = Query(..., ge=-90, le=90),
+    det: str = Query("all"),
+    radius: float = Query(2.0, ge=0.5, le=6, description="aperture radius in pixels"),
+    epoch_mjd: float | None = Query(None, description="for a MOVING object: the date (MJD) at which it is at ra, dec"),
+    pm_east: float = Query(0.0, description="moving object: motion towards the east, arcsec/yr"),
+    pm_north: float = Query(0.0, description="moving object: motion towards the north, arcsec/yr"),
+):
+    frames = archive.find(ra, dec, det)
+    motion = None if epoch_mjd is None else {"epoch_mjd": epoch_mjd, "pm_east": pm_east, "pm_north": pm_north}
+    return {"points": measure(frames, ra, dec, radius, motion)}
+
+
+def _build(frames, ra, dec, fov, scale, key):
+    tgt, npix = target_wcs(ra, dec, fov, scale)
+
+    # Cut everything first, then stretch per detector (shared scale within a detector).
+    cut = []
+    for f in frames:
+        img, flags = cutout(f, tgt, npix)
+        if np.isfinite(img).mean() < MIN_VALID_FRACTION:
+            continue
+        cut.append((f, img, flags))
+
+    by_det = defaultdict(list)
+    for item in cut:
+        by_det[item[0].detector].append(item)
+
+    out = []
+    for det_items in by_det.values():
+        stretched = shared_stretch([img for _, img, _ in det_items])
+        for (f, img, flags), arr8 in zip(det_items, stretched):
+            i = len(out)
+            mask_png = flags_to_png(flags)
+            out.append({
+                "mjd": round(f.mjd, 6),
+                "dateISO": f.date_iso,
+                "detector": f.detector,
+                "provenance": f.provenance,
+                "wavelengthMinUm": round(f.wave_min_um, 4),
+                "wavelengthMaxUm": round(f.wave_max_um, 4),
+                "imageUrl": cache.save_png(key, i, to_png(arr8)),
+                # the same pixels as real numbers (float32, background-subtracted, north up): for detection
+                "dataUrl": cache.save_bytes(key, i, float_cutout_bytes(img), "f32"),
+                # 1 = a BAD flag bit is set here (a saturated core, hot pixels ...): the position of a bright star is fitted without them
+                "maskUrl": cache.save_bytes(key, f"{i}_mask", mask_cutout_bytes(flags, img.shape), "u8"),
+                "flags": flag_summary(flags),
+                "flagsUrl": cache.save_png(key, f"{i}_flags", mask_png) if mask_png else None,
+                "pixelScaleArcsec": round(scale, 4),
+                # the unit of the float pixels (BUNIT of the file, e.g. "MJy / sr"), or None if the file does not say; the viewer's readout shows it
+                "unit": f.bunit,
+            })
+    out.sort(key=lambda fr: fr["mjd"])
+    return out
+
+
+@app.get("/api/hips/{path:path}")
+def hips(path: str):
+    try:
+        data, ctype = hips_proxy.fetch(path)
+    except hips_proxy.NotAllowed as exc:
+        return JSONResponse(status_code=403, content={"detail": str(exc)})
+    except FileNotFoundError:
+        return Response(status_code=404)
+    except OSError as exc:
+        return JSONResponse(status_code=502, content={"detail": f"IRSA HiPS unreachable: {exc}"})
+    return Response(content=data, media_type=ctype, headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.get("/api/catalogue")
+def catalogue(
+    cat: str = Query(..., description='"2mass", "allwise" or "gaia" (SIMBAD is asked by the browser itself)'),
+    ra: float = Query(..., ge=0, lt=360, description="degrees, ICRS"),
+    dec: float = Query(..., ge=-90, le=90, description="degrees, ICRS"),
+    radius: float = Query(5, gt=0, le=catalogues.RADIUS_MAX_ARCMIN, description="arcmin"),
+    minpm: float = Query(0, ge=0, le=catalogues.MIN_PM_MAX_MAS, description="gaia only: keep stars moving faster than this, mas/yr"),
+):
+    """Known sources around a position, for the cross-match of "Find everything"."""
+    try:
+        return catalogues.cone_search(cat, ra, dec, radius, minpm)
+    except catalogues.NotAllowed as exc:
+        return JSONResponse(status_code=403, content={"detail": str(exc)})
+    except catalogues.CatalogueError as exc:
+        return JSONResponse(status_code=502, content={"detail": str(exc)})
+
+
+@app.get("/api/survey")
+def survey_endpoint(
+    ra: float = Query(..., ge=0, lt=360, description="degrees, ICRS"),
+    dec: float = Query(..., ge=-90, le=90, description="degrees, ICRS"),
+    radius: float = Query(0.5, gt=0, le=survey.RADIUS_MAX_DEG, description="degrees"),
+    det: str = Query("all", description='"all" or a detector name like "D3"'),
+    limit: int = Query(survey.LIMIT_DEFAULT, ge=1, le=survey.LIMIT_MAX),
+):
+    """Which SPHEREx survey images (as IRSA publishes them) touch a circle on the sky: the footprint of each. A live query of IRSA, not the files on this computer."""
+    try:
+        return survey.search(ra, dec, radius, det, limit)
+    except survey.SurveyError as exc:
+        return JSONResponse(status_code=502, content={"detail": str(exc)})
+
+
+@app.exception_handler(ValueError)
+def value_error(_request, exc):
+    # Same {"detail": ...} shape as FastAPI's own errors -> apiSource.js shows the message.
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
+
+
+class RevalidatedStatic(StaticFiles):
+    """Static files the browser must re-check on every load (no stale .js/.css while developing)."""
+
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
+
+
+app.mount("/cutouts", StaticFiles(directory=cache.CACHE_DIR), name="cutouts")
+# Mounted LAST so /api/... and /cutouts/... win. Lets you open http://localhost:8001/ directly.
+if FRONTEND_DIR.exists():
+    app.mount("/", RevalidatedStatic(directory=FRONTEND_DIR, html=True), name="frontend")

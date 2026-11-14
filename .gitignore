@@ -1,37 +1,7 @@
-# Real SPHEREx data: never committed, never published (data terms unverified).
-/data/
+backend/.venv/
+backend/cache/
 backend/data/
-*.fits
-*.fits.gz
-*.fit
-*.fts
-
-# Caches and local stores
-backend/.cache/
-.cache/
 __pycache__/
 *.pyc
-.pytest_cache/
-.venv/
-backend/.venv/
-node_modules/
-scratch/out/
-
-# Secrets: the repository holds only .env.example
-.env
-.env.*
-!.env.example
-*.pem
-*.key
-*.p12
-*.pfx
-*service-account*.json
-*service_account*.json
-*credentials*.json
-application_default_credentials.json
-
-# Local tooling
-.remember/
-.claude/settings.local.json
-.DS_Store
-Thumbs.db
+.claude/
+scratch/_out/
