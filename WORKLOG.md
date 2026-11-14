@@ -1,4 +1,4 @@
-NEXT STEP: do P5 (submission draft: docs/SUBMISSION.md with project text, 30-second storyboard or 7-slide outline, AI-use declaration, pitch script and Q&A; README update).
+NEXT STEP: do P6 (full profile: GcsStore with google-cloud-storage, retrieval CLI against a fake archive, processing job, manifest builder, cache, health; needs Python >= 3.12 for the pinned backend, not available on this Mac yet).
 
 # WORKLOG: SPHEREx Blink 4.0
 
@@ -156,3 +156,13 @@ and 3.0's whole page layout, HTML and CSS (not allowed to be copied).
 - WHY: a link between two documents (not a class toggle) is the switch, so the two structures cannot drift into one page; the tests read the
   shells as text so they run in Node with no browser.
 - WHAT REMAINS: an axe run when a browser tool is available; header badges in Romanian.
+
+## P5 Submission draft
+
+- 2026-11-14 (local). Status: DONE (draft). Commit: "P5 submission draft" (see `git log`).
+- WHAT: `docs/SUBMISSION.md`: requirement table (from the organisers' slides as quoted in the task, marked re-verify), project page text,
+  30-second storyboard, 7-slide outline, 3-4 minute pitch script, Q&A sheet, AI-use declaration draft.
+- HOW: written from FEATURE_STATUS and this log; every claim points to a test or is marked [unverified]. NOT run: the `submission-check` skill
+  (it lives in the author's Windows `.claude/skills`, not available here). The public demo URL is not decided (author).
+- WHY: done before P6 so that a submission exists if the session ends.
+- WHAT REMAINS: the author picks video or slides and makes it; P8 updates the text with what really works.
