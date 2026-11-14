@@ -1,4 +1,4 @@
-NEXT STEP: do P6 (full profile: GcsStore with google-cloud-storage, retrieval CLI against a fake archive, processing job, manifest builder, cache, health; needs Python >= 3.12 for the pinned backend, not available on this Mac yet).
+NEXT STEP: do P6 (full profile: GcsStore with google-cloud-storage, retrieval CLI against a fake archive, processing job, manifest builder, cache, health). Backend venv on this Mac: backend/.venv/bin/python (Python 3.12.10).
 
 # WORKLOG: SPHEREx Blink 4.0
 
@@ -166,3 +166,9 @@ and 3.0's whole page layout, HTML and CSS (not allowed to be copied).
   (it lives in the author's Windows `.claude/skills`, not available here). The public demo URL is not decided (author).
 - WHY: done before P6 so that a submission exists if the session ends.
 - WHAT REMAINS: the author picks video or slides and makes it; P8 updates the text with what really works.
+
+## Environment: Python 3.12 on the Mac (2026-11-14)
+
+- The author installed Python 3.12.10 from python.org (`python-3.12.10-macos11.pkg`, Apple-notarized; the last 3.12 release with a macOS
+  installer). `backend/.venv` recreated with `/usr/local/bin/python3.12 -m venv backend/.venv` and `pip install -r backend/requirements-dev.txt`
+  (all pins installed). `backend/.venv/bin/python -m pytest backend -q` -> **16 passed** (same count as P1 on Windows).
