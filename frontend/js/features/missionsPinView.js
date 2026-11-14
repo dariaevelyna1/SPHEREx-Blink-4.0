@@ -1,7 +1,7 @@
 // missionsPinView.js – the DOM part of missions.js (the mission card) and pinBoard.js (the pin board with its sky map and the observer-name dialog).
 
 import { missionWhy, missionsDatabase, pickRandomMission, missionHref, loadProgress, saveProgress, markComplete, noteShown } from "./missions.js";
-import { makePin, pinTag, loadPins, savePins, addPin, removePin, skyToMap, verifyPin, eclipticPoints, fieldOffsetArcmin, initials, timeAgo, decorativeStars } from "./pinBoard.js";
+import { makePin, pinTag, loadPins, savePins, addPin, removePin, skyToMap, verifyPin, eclipticPoints, galacticToEquatorial, fieldOffsetArcmin, initials, timeAgo, decorativeStars } from "./pinBoard.js";
 import { formatRA, formatDec } from "../coords.js";
 import { sharedConfig, fetchSharedPins, pushSharedPin, mergePins } from "./pinSync.js";
 import { PIN_BOARD_URL, PIN_BOARD_KEY } from "../config.js";
@@ -99,7 +99,20 @@ export function setupPinBoard({ getCandidate, getContext }) {
   const svg = $("pin-map");
   const popup = $("pin-popup");
   const el = (tag, attrs = {}, parent = svg) => { const n = document.createElementNS(SVG, tag); for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v); parent.appendChild(n); return n; };
-  const text = (x, y, t, cls, anchor = "middle") => { const n = el("text", { x, y, class: cls, "text-anchor": anchor }); n.textContent = t; return n; };
+  // zoom and pan: the map is drawn once in map units (W x H); the viewBox shows a part of it. Labels and pins keep their size on screen.
+  let zoom = 1, cx = W / 2, cy = H / 2;
+  const vb = () => { const w = W / zoom, h = H / zoom; const x = Math.min(Math.max(cx - w / 2, 0), W - w), y = Math.min(Math.max(cy - h / 2, 0), H - h); return { x, y, w, h }; };
+  const text = (x, y, t, cls, anchor = "middle") => { const n = el("text", { x: 0, y: 0, transform: `translate(${x} ${y}) scale(${1 / zoom})`, class: cls, "text-anchor": anchor }); n.textContent = t; return n; };
+  function applyView() {
+    const v = vb(); cx = v.x + v.w / 2; cy = v.y + v.h / 2;
+    svg.setAttribute("viewBox", `${v.x.toFixed(2)} ${v.y.toFixed(2)} ${v.w.toFixed(2)} ${v.h.toFixed(2)}`);
+    const zl = $("pb-zoom-level"); if (zl) zl.textContent = `${zoom.toFixed(zoom < 2 ? 1 : 0)}×`;
+  }
+  function polyline(points, cls, extra = {}) {               // a path in RA/Dec, split where it wraps around RA 0h
+    let d = "", prev = null;
+    for (const [ra, dec] of points) { const p = project(ra, dec); d += (prev && Math.abs(p.x - prev.x) < W / 2 ? "L" : "M") + p.x.toFixed(1) + " " + p.y.toFixed(1); prev = p; }
+    return el("path", { d, class: cls, ...extra });
+  }
 
   let drawnField = "";
   function refresh() {
@@ -123,18 +136,30 @@ export function setupPinBoard({ getCandidate, getContext }) {
     svg.textContent = "";
     const defs = el("defs");
     defs.innerHTML = `<radialGradient id="pb-sky" cx="50%" cy="45%" r="75%"><stop offset="0" class="pb-sky-in"/><stop offset="1" class="pb-sky-out"/></radialGradient>
-      <radialGradient id="pb-glow"><stop offset="0" class="pb-glow-in"/><stop offset="1" class="pb-glow-out"/></radialGradient>`;
+      <radialGradient id="pb-glow"><stop offset="0" class="pb-glow-in"/><stop offset="1" class="pb-glow-out"/></radialGradient>
+      <filter id="pb-blur-wide" x="-10%" y="-50%" width="120%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>
+      <filter id="pb-blur" x="-10%" y="-50%" width="120%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>`;
     el("rect", { width: W, height: H, fill: "url(#pb-sky)" });
-    for (const [x, y, r, o] of decorativeStars(view === "sky" ? 320 : 140, view === "sky" ? 7 : 11)) el("circle", { cx: x * W, cy: y * H, r, class: "pb-star", "fill-opacity": o });
+    for (const [x, y, r, o] of decorativeStars(view === "sky" ? 320 : 140, view === "sky" ? 7 : 11)) el("circle", { cx: x * W, cy: y * H, r: r / Math.sqrt(zoom), class: "pb-star", "fill-opacity": o });
     const f = getContext().field;
     if (view === "sky") {
-      for (let h = 0; h < 24; h += 2) { const x = (1 - h / 24) * W; el("line", { x1: x, y1: 0, x2: x, y2: H, class: "pb-grid" }); if (h) text(x, H - 6, `${h}h`, "pb-label"); }
-      for (const d of [-60, -30, 0, 30, 60]) { const y = (90 - d) / 180 * H; el("line", { x1: 0, y1: y, x2: W, y2: y, class: d ? "pb-grid" : "pb-equator" }); text(6, y - 4, `${d > 0 ? "+" : ""}${d}°`, "pb-label", "start"); }
-      let d = "", prev = null;
-      for (const [ra, dec] of eclipticPoints()) { const p = project(ra, dec); d += (prev && Math.abs(p.x - prev.x) < W / 2 ? "L" : "M") + p.x.toFixed(1) + " " + p.y.toFixed(1); prev = p; }
-      el("path", { d, class: "pb-ecliptic" });
-      text(W - 8, 16, "RA ← increases   ·   Dec ↑", "pb-label", "end");
-      if (f && Number.isFinite(f.ra)) { const p = project(f.ra, f.dec); const g = el("g", { class: "pb-here", transform: `translate(${p.x} ${p.y})` }); el("circle", { r: 9 }, g); el("path", { d: "M-14 0H-5M5 0H14M0 -14V-5M0 5V14" }, g); text(p.x, p.y - 16, "you are here", "pb-label pb-here-label"); }
+      // the Milky Way: the galactic plane (b = 0) drawn as a soft glowing band (real positions, from the standard galactic rotation)
+      const plane = (b) => Array.from({ length: 181 }, (_, i) => galacticToEquatorial(i * 2, b));
+      polyline(plane(0), "pb-milkyway-wide", { filter: "url(#pb-blur-wide)" });
+      polyline(plane(0), "pb-milkyway", { filter: "url(#pb-blur)" });
+      for (const b of [-6, 6]) polyline(plane(b), "pb-milkyway-edge", { filter: "url(#pb-blur)" });
+      const gc = project(...galacticToEquatorial(0, 0));
+      el("circle", { cx: gc.x, cy: gc.y, r: 10, class: "pb-gc", filter: "url(#pb-blur)" });
+      text(gc.x, gc.y + 22 / zoom, "Galactic centre", "pb-label pb-gc-label");
+      const ac = project(...galacticToEquatorial(150, 0));
+      text(ac.x, ac.y - 12 / zoom, "Milky Way", "pb-label pb-mw-label");
+      const v = vb(), stepH = zoom >= 4 ? 1 : 2, stepD = zoom >= 4 ? 10 : 30;
+      for (let h = 0; h < 24; h += stepH) { const x = (1 - h / 24) * W; el("line", { x1: x, y1: 0, x2: x, y2: H, class: "pb-grid" }); if (h) text(x, v.y + 16 / zoom, `${h}h`, "pb-label"); }
+      for (let d = -90 + stepD; d < 90; d += stepD) { const y = (90 - d) / 180 * H; el("line", { x1: 0, y1: y, x2: W, y2: y, class: d ? "pb-grid" : "pb-equator" }); text(v.x + 6 / zoom, y - 4 / zoom, `${d > 0 ? "+" : ""}${d}°`, "pb-label", "start"); }
+      polyline(eclipticPoints(), "pb-ecliptic");
+      const ep = project(...eclipticPoints(5)[12]);
+      text(ep.x, ep.y - 6 / zoom, "ecliptic", "pb-label pb-ecl-label");
+      if (f && Number.isFinite(f.ra)) { const p = project(f.ra, f.dec); const g = el("g", { class: "pb-here", transform: `translate(${p.x} ${p.y}) scale(${1 / zoom})` }); el("circle", { r: 9 }, g); el("path", { d: "M-14 0H-5M5 0H14M0 -14V-5M0 5V14" }, g); text(p.x, p.y - 16 / zoom, "you are here", "pb-label pb-here-label"); }
     } else {
       const half = Math.max(1, (f?.fov ?? 5)) * 0.75, k = (H / 2) / half;
       for (let a = -Math.floor(half * 2); a <= half * 2; a++) { const x = W / 2 + a * k, y = H / 2 + a * k; el("line", { x1: x, y1: 0, x2: x, y2: H, class: a ? "pb-grid" : "pb-equator" }); if (y >= 0 && y <= H) el("line", { x1: 0, y1: y, x2: W, y2: y, class: a ? "pb-grid" : "pb-equator" }); }
@@ -150,7 +175,7 @@ export function setupPinBoard({ getCandidate, getContext }) {
     for (const p of pins) {
       const q = project(p.ra, p.dec);
       if (!q.inside) { outside++; continue; }
-      const g = el("g", { class: "pin-marker" + (p.dataKind === "synthetic" ? " is-synthetic" : "") + (p.id === openId ? " is-open" : ""), transform: `translate(${q.x.toFixed(1)} ${q.y.toFixed(1)})`, tabindex: 0, role: "button", "data-id": p.id, "aria-label": `${pinTag(p)}, RA ${formatRA(p.ra)}, Dec ${formatDec(p.dec)}` });
+      const g = el("g", { class: "pin-marker" + (p.dataKind === "synthetic" ? " is-synthetic" : "") + (p.id === openId ? " is-open" : ""), transform: `translate(${q.x.toFixed(1)} ${q.y.toFixed(1)}) scale(${(1 / zoom).toFixed(3)})`, tabindex: 0, role: "button", "data-id": p.id, "aria-label": `${pinTag(p)}, RA ${formatRA(p.ra)}, Dec ${formatDec(p.dec)}` });
       el("circle", { r: 16, fill: "url(#pb-glow)", class: "pb-halo" }, g);
       el("circle", { r: 7, class: "pb-pulse" }, g);
       el("path", { d: "M0 0 C-3 -6 -9 -9 -9 -15 A9 9 0 1 1 9 -15 C9 -9 3 -6 0 0Z", class: "pb-drop" }, g);
@@ -195,11 +220,13 @@ export function setupPinBoard({ getCandidate, getContext }) {
       <p class="pb-popup-actions"><a class="btn btn-small" href="${esc(fieldLink(p))}">Open this field</a> <button type="button" class="btn btn-small" data-act="copy">Copy hash</button></p>`;
     popup.hidden = false;
     if (getComputedStyle(popup).position !== "absolute") { popup.style.left = popup.style.top = ""; verifyInto(popup); return; }
-    const box = svg.getBoundingClientRect(), sx = box.width / W, sy = box.height / H;
-    const left = Math.min(Math.max(8, q.x * sx - popup.offsetWidth / 2), box.width - popup.offsetWidth - 8);
-    const above = q.y * sy - 30 - popup.offsetHeight;
+    const box = svg.getBoundingClientRect(), v = vb(), sx = box.width / v.w, sy = box.height / v.h;
+    const px = (q.x - v.x) * sx, py = (q.y - v.y) * sy;
+    if (px < 0 || px > box.width || py < 0 || py > box.height) { popup.hidden = true; return; }
+    const left = Math.min(Math.max(8, px - popup.offsetWidth / 2), box.width - popup.offsetWidth - 8);
+    const above = py - 30 - popup.offsetHeight;
     popup.style.left = `${left}px`;
-    popup.style.top = `${above > 4 ? above : q.y * sy + 14}px`;
+    popup.style.top = `${above > 4 ? above : py + 14}px`;
     verifyInto(popup);
   }
 
@@ -221,6 +248,7 @@ export function setupPinBoard({ getCandidate, getContext }) {
   }
 
   function render() {
+    applyView();
     drawBase();
     drawPins();
     const list = $("pin-list");
@@ -242,7 +270,36 @@ export function setupPinBoard({ getCandidate, getContext }) {
   }
 
   // ---- events
-  svg.addEventListener("click", (e) => { const g = e.target.closest(".pin-marker"); openId = g ? (g.dataset.id === openId ? null : g.dataset.id) : null; render(); });
+  let drag = null, dragged = false;
+  svg.addEventListener("click", (e) => { if (dragged) { dragged = false; return; } const g = e.target.closest(".pin-marker"); openId = g ? (g.dataset.id === openId ? null : g.dataset.id) : null; render(); });
+  const toMap = (e) => { const r = svg.getBoundingClientRect(), v = vb(); return { x: v.x + (e.clientX - r.left) / r.width * v.w, y: v.y + (e.clientY - r.top) / r.height * v.h }; };
+  svg.addEventListener("pointerdown", (e) => { if (zoom > 1 && !e.target.closest(".pin-marker")) { drag = { x: e.clientX, y: e.clientY, cx, cy }; svg.setPointerCapture(e.pointerId); } });
+  svg.addEventListener("pointermove", (e) => {
+    const m = toMap(e), out = $("pb-readout");
+    if (out) out.textContent = view === "sky" ? `RA ${formatRA((1 - m.x / W) * 360)} · Dec ${formatDec(90 - m.y / H * 180)}` : "";
+    if (!drag) return;
+    const r = svg.getBoundingClientRect(), v = vb();
+    const dx = (e.clientX - drag.x) / r.width * v.w, dy = (e.clientY - drag.y) / r.height * v.h;
+    if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 4) dragged = true;
+    cx = drag.cx - dx; cy = drag.cy - dy; applyView(); if (!popup.hidden) showPopup();
+  });
+  svg.addEventListener("pointerup", () => { if (drag && dragged) render(); drag = null; });
+  svg.addEventListener("pointerleave", () => { const out = $("pb-readout"); if (out) out.textContent = "Move over the map to read RA and Dec. Zoom with + / − (or Ctrl + scroll), drag to move."; });
+  function zoomTo(z, at) {
+    const nz = Math.min(16, Math.max(1, z));
+    if (at) { cx = at.x + (cx - at.x) * zoom / nz; cy = at.y + (cy - at.y) * zoom / nz; }
+    zoom = nz; render();
+  }
+  svg.addEventListener("wheel", (e) => { if (!(e.ctrlKey || e.metaKey || document.fullscreenElement)) return; e.preventDefault(); zoomTo(zoom * (e.deltaY < 0 ? 1.25 : 0.8), toMap(e)); }, { passive: false });
+  document.querySelectorAll("[data-pb-zoom]").forEach((b) => b.addEventListener("click", () => {
+    const a = b.dataset.pbZoom;
+    if (a === "in") zoomTo(zoom * 1.5); else if (a === "out") zoomTo(zoom / 1.5); else { zoom = 1; cx = W / 2; cy = H / 2; render(); }
+  }));
+  $("pb-fullscreen")?.addEventListener("click", () => {
+    const wrap = svg.closest(".pb-map-wrap");
+    if (document.fullscreenElement) document.exitFullscreen?.(); else wrap.requestFullscreen?.().catch(() => wrap.classList.toggle("is-expanded"));
+  });
+  document.addEventListener("fullscreenchange", () => { $("pb-fullscreen").textContent = document.fullscreenElement ? "✕ Exit full screen" : "⛶ Full screen"; if (!popup.hidden) showPopup(); });
   svg.addEventListener("keydown", (e) => { const g = e.target.closest(".pin-marker"); if (g && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openId = g.dataset.id; render(); } });
   popup.addEventListener("click", (e) => {
     const act = e.target.closest("[data-act]")?.dataset.act;
@@ -257,11 +314,12 @@ export function setupPinBoard({ getCandidate, getContext }) {
       openId = b.dataset.id;
       const p = pins.find((x) => x.id === openId);
       if (view === "field" && !project(p.ra, p.dec).inside) setView("sky");
+      const q = project(p.ra, p.dec); cx = q.x; cy = q.y; if (view === "sky") zoom = Math.max(zoom, 4);
       render(); svg.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   });
   function setView(v) {
-    view = v;
+    view = v; zoom = 1; cx = W / 2; cy = H / 2;
     document.querySelectorAll(".pb-view").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === v)));
   }
   document.querySelectorAll(".pb-view").forEach((b) => b.addEventListener("click", () => { setView(b.dataset.view); render(); }));

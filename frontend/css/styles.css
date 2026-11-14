@@ -1511,3 +1511,30 @@ html[data-theme] .site-footer { border-top: 1px solid var(--border); background:
 .mover-detail > .btn { margin: .2rem .3rem .2rem 0; }
 .pb-sync { margin: 6px 0; padding: 6px 10px; border-radius: 10px; background: rgb(var(--accent-rgb) / .08); border: 1px solid rgb(var(--accent-rgb) / .3); }
 .pb-sync.is-bad { border-color: var(--warn); background: rgb(var(--warn-rgb) / .1); }
+
+/* ---------- the pin board's big sky map (zoom, pan, full screen) ---------- */
+#pin-board { grid-column: 1 / -1; }
+.pb-map-wrap { position: relative; border-radius: var(--radius); overflow: hidden; box-shadow: 0 30px 60px -30px rgb(0 0 0 / .8), inset 0 0 0 1px rgb(255 255 255 / .06); }
+.pin-map { border: 0; border-radius: 0; aspect-ratio: 2 / 1; min-height: 260px; cursor: crosshair; touch-action: none; background: radial-gradient(ellipse at 50% 40%, #1b2a48 0%, #0b1222 60%, #05080f 100%); }
+.pb-sky-in { stop-color: #1b2a48; } .pb-sky-out { stop-color: #05080f; }
+.pin-map line, .pin-map path { vector-effect: non-scaling-stroke; }
+.pb-milkyway-wide { fill: none; stroke: #c9d6ff; stroke-opacity: .16; stroke-width: 34; }
+.pb-milkyway { fill: none; stroke: #e6ecff; stroke-opacity: .22; stroke-width: 12; }
+.pb-milkyway-edge { fill: none; stroke: #b9c8ff; stroke-opacity: .10; stroke-width: 6; }
+.pin-map .pb-milkyway-wide, .pin-map .pb-milkyway, .pin-map .pb-milkyway-edge { vector-effect: none; }
+.pb-gc { fill: #ffe6b0; fill-opacity: .55; }
+.pb-gc-label, .pb-mw-label { fill: #e6ecff; font-style: italic; opacity: .8; }
+.pb-ecl-label { fill: #f2c14e; opacity: .85; }
+.pb-label { font-size: 11px; paint-order: stroke; stroke: #05080f; stroke-width: 3px; stroke-opacity: .7; }
+.pb-map-tools { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px; border-radius: 12px; background: rgb(5 8 15 / .7); backdrop-filter: blur(6px); border: 1px solid rgb(255 255 255 / .12); }
+.pb-map-tools button { width: 34px; height: 34px; border-radius: 8px; border: 0; background: rgb(255 255 255 / .08); color: #fff; font-size: 1.1rem; cursor: pointer; }
+.pb-map-tools button:hover { background: rgb(var(--accent-rgb) / .6); }
+.pb-zoom-level { font: 11px var(--font-mono); color: #ffffffc0; }
+.pb-fullscreen { position: absolute; top: 10px; left: 10px; padding: 6px 12px; border-radius: 999px; border: 1px solid rgb(255 255 255 / .18); background: rgb(5 8 15 / .7); color: #fff; font: inherit; font-size: .82rem; cursor: pointer; backdrop-filter: blur(6px); }
+.pb-readout { position: absolute; left: 10px; bottom: 8px; margin: 0; padding: 3px 10px; border-radius: 999px; background: rgb(5 8 15 / .7); color: #ffffffd0; font: 11px var(--font-mono); pointer-events: none; max-width: calc(100% - 20px); }
+.pb-map-wrap:fullscreen, .pb-map-wrap.is-expanded { display: grid; place-items: center; background: #05080f; border-radius: 0; }
+.pb-map-wrap.is-expanded { position: fixed; inset: 0; z-index: 2000; }
+.pb-map-wrap:fullscreen .pin-map, .pb-map-wrap.is-expanded .pin-map { width: 100vw; height: 100vh; aspect-ratio: auto; }
+.pb-map-wrap:fullscreen .pb-popup { position: absolute; }
+.pb-key-mw { width: 18px; border-radius: 6px; background: linear-gradient(90deg, transparent, #c9d6ff, transparent); }
+@media (max-width: 640px) { .pin-map { min-height: 200px; } .pb-readout { display: none; } }

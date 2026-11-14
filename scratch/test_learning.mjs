@@ -8,7 +8,7 @@ function check(name, ok) {
   if (!ok) failed++;
 }
 
-check("learning path has eight unique levels in the requested order", LEVELS.length === 8 && LEVELS.map((x) => x.title).join("|") === "What is SPHEREx?|What is Infrared Light?|Stars|Nebulae|Galaxies|Moving Objects|Searching for Planet X|Become a Citizen Scientist");
+check("learning path has sixteen unique levels in order (eight added on purpose, 14 Nov 2026), ending with the citizen scientist", LEVELS.length === 16 && new Set(LEVELS.map((x) => x.id)).size === 16 && LEVELS.every((x, i) => x.id === i + 1) && LEVELS.slice(0, 7).map((x) => x.title).join("|") === "What is SPHEREx?|What is Infrared Light?|Stars|Nebulae|Galaxies|Moving Objects|Searching for Planet X" && LEVELS.at(-1).title === "Become a Citizen Scientist");
 check("quiz data includes every requested question type", new Set(LEVELS.map((x) => x.quiz.type)).size === 4);
 check("correct and incorrect quiz answers have useful feedback", gradeAnswer(6, "orange").correct && gradeAnswer(6, "wrong").feedback.length > 20);
 check("classification quiz accepts only a complete matching sort", gradeAnswer(4, { star: "star", cloud: "nebula", island: "galaxy" }).correct && !gradeAnswer(4, { star: "nebula" }).correct);
@@ -37,6 +37,6 @@ const home = readFileSync(new URL("../frontend/overview.html", import.meta.url),
 const learn = readFileSync(new URL("../frontend/learn.html", import.meta.url), "utf8");
 const science = readFileSync(new URL("../frontend/js/scienceExplain.js", import.meta.url), "utf8");
 check("new landing offers both modes and the Blink 4.0 headline", home.includes("SPHEREx Blink 4.0") && home.includes("Explore the Universe Your Way") && home.includes("Learn Mode") && home.includes("Science Mode"));
-check("learn page includes all levels, Astra and classroom areas (the learner profile panel was removed on purpose, 14 Nov 2026)", learn.includes("Astra") && !learn.includes("learner-profile") && learn.includes("classroom-dashboard") && learn.includes("SYNTHETIC") && learn.includes("aria-live"));
+check("learn page includes all levels, Astra (the learner profile and classroom panels were removed on purpose, 14 Nov 2026)", learn.includes("Astra") && !learn.includes("learner-profile") && !learn.includes("classroom-dashboard") && learn.includes("SYNTHETIC") && learn.includes("aria-live"));
 check("Science Mode exposes a keyboard-operable simple explanation on each panel", science.includes('querySelectorAll("main .panel")') && science.includes('aria-expanded') && science.includes("Explain Simply"));
 if (failed) process.exitCode = 1;

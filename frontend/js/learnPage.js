@@ -244,19 +244,21 @@ function renderSummary() {
       return li;
     }));
   }
-  const rows = state.profiles.map((item) => {
-    const tr = el("tr");
-    const scores = Object.values(item.quizScores);
-    const average = scores.length ? `${Math.round(scores.reduce((sum, score) => sum + score.score, 0) / scores.length)}% · ${scores.reduce((sum, score) => sum + score.attempts, 0)} tries` : "—";
-    tr.append(el("th", { scope: "row" }, item.name), el("td", {}, `${item.completed.length} / ${LEVELS.length}`), el("td", {}, average), el("td", {}, `${item.xp} XP`), el("td", {}, rankForXp(item.xp)));
-    return tr;
-  });
-  $("#classroom-rows").replaceChildren(...rows);
-  const classAverage = Math.round(state.profiles.reduce((sum, item) => sum + progressPercent(item), 0) / state.profiles.length);
-  $("#class-progress").textContent = `${state.profiles.length} learner${state.profiles.length === 1 ? "" : "s"} · average learning path completion ${classAverage}%`;
-  if (document.activeElement !== $("#classroom-name")) $("#classroom-name").value = state.classroomName;
-  const worksheetSelect = $("#worksheet-level");
-  if (!worksheetSelect.options.length) worksheetSelect.replaceChildren(...LEVELS.map((item) => el("option", { value: String(item.id) }, `Level ${item.id} · ${item.title}`)));
+  if ($("#classroom-rows")) {                        // the classroom dashboard and worksheets were removed from learn.html (author, 14 Nov 2026)
+    const rows = state.profiles.map((item) => {
+      const tr = el("tr");
+      const scores = Object.values(item.quizScores);
+      const average = scores.length ? `${Math.round(scores.reduce((sum, score) => sum + score.score, 0) / scores.length)}% · ${scores.reduce((sum, score) => sum + score.attempts, 0)} tries` : "—";
+      tr.append(el("th", { scope: "row" }, item.name), el("td", {}, `${item.completed.length} / ${LEVELS.length}`), el("td", {}, average), el("td", {}, `${item.xp} XP`), el("td", {}, rankForXp(item.xp)));
+      return tr;
+    });
+    $("#classroom-rows").replaceChildren(...rows);
+    const classAverage = Math.round(state.profiles.reduce((sum, item) => sum + progressPercent(item), 0) / state.profiles.length);
+    $("#class-progress").textContent = `${state.profiles.length} learner${state.profiles.length === 1 ? "" : "s"} · average learning path completion ${classAverage}%`;
+    if (document.activeElement !== $("#classroom-name")) $("#classroom-name").value = state.classroomName;
+    const worksheetSelect = $("#worksheet-level");
+    if (!worksheetSelect.options.length) worksheetSelect.replaceChildren(...LEVELS.map((item) => el("option", { value: String(item.id) }, `Level ${item.id} · ${item.title}`)));
+  }
 }
 
 function render() {
@@ -286,7 +288,7 @@ if ($("#learner-profile")) {
     render();
   });
 }
-$("#classroom-name").addEventListener("change", (event) => { state.classroomName = event.target.value.trim().slice(0, 60) || "My classroom"; save(); });
+$("#classroom-name")?.addEventListener("change", (event) => { state.classroomName = event.target.value.trim().slice(0, 60) || "My classroom"; save(); });
 
 $("#astra-form").addEventListener("submit", (event) => {
   event.preventDefault();
@@ -361,14 +363,14 @@ function buildPrintable(level, includeKey = true) {
   return section;
 }
 
-$("#print-worksheet").addEventListener("click", () => {
+$("#print-worksheet")?.addEventListener("click", () => {
   const id = Number($("#worksheet-level").value);
   const level = LEVELS.find((item) => item.id === id);
   if (!level) return;
   $("#printable-content").replaceChildren(buildPrintable(level));
   window.print();
 });
-$("#print-class-report").addEventListener("click", () => {
+$("#print-class-report")?.addEventListener("click", () => {
   const printable = el("article", { className: "worksheet-sheet" });
   printable.append(el("p", { className: "learn-kicker" }, "SPHEREx Blink 4.0 · Teacher dashboard"), el("h1", {}, state.classroomName || "My classroom"), el("p", {}, `Learners on this device: ${state.profiles.length}`));
   const list = el("ul");

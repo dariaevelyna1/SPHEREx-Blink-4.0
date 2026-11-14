@@ -122,3 +122,13 @@ export function decorativeStars(n = 260, seed = 7) {
   const rnd = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   return Array.from({ length: n }, () => [rnd(), rnd(), 0.4 + rnd() ** 4 * 1.6, 0.25 + rnd() * 0.6]);
 }
+
+/** Galactic (l, b) to equatorial (RA, Dec) J2000, degrees. Standard rotation: north galactic pole RA 192.85948°, Dec 27.12825°, l of the north celestial pole 122.93192°.
+ *  Checked: l=0, b=0 gives RA 266.40°, Dec -28.94° (the galactic centre). */
+export function galacticToEquatorial(l, b) {
+  const d = Math.PI / 180, aG = 192.85948 * d, dG = 27.12825 * d, lN = 122.93192 * d;
+  const L = l * d, B = b * d;
+  const sd = Math.sin(B) * Math.sin(dG) + Math.cos(B) * Math.cos(dG) * Math.cos(lN - L);
+  const ra = (aG + Math.atan2(Math.cos(B) * Math.sin(lN - L), Math.sin(B) * Math.cos(dG) - Math.cos(B) * Math.sin(dG) * Math.cos(lN - L))) / d;
+  return [((ra % 360) + 360) % 360, Math.asin(Math.max(-1, Math.min(1, sd))) / d];
+}

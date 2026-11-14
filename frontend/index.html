@@ -440,10 +440,18 @@
       </div>
       <div class="pb-map-wrap">
         <svg id="pin-map" class="pin-map" viewBox="0 0 720 360" role="img" aria-label="Sky map of the pins"></svg>
+        <div class="pb-map-tools" role="group" aria-label="Map zoom">
+          <button type="button" data-pb-zoom="in" aria-label="Zoom in">+</button>
+          <span class="pb-zoom-level" id="pb-zoom-level">1×</span>
+          <button type="button" data-pb-zoom="out" aria-label="Zoom out">−</button>
+          <button type="button" data-pb-zoom="reset" aria-label="Show the whole map">⟲</button>
+        </div>
+        <button type="button" class="pb-fullscreen" id="pb-fullscreen">⛶ Full screen</button>
+        <p class="pb-readout" id="pb-readout" aria-live="off">Move over the map to read RA and Dec. Zoom with + / − (or Ctrl + scroll), drag to move.</p>
         <div class="pb-popup" id="pin-popup" hidden></div>
       </div>
       <p class="pb-sync small" id="pin-sync" role="status" aria-live="polite"></p>
-      <p class="pb-legend small"><span class="pb-key pb-key-real"></span> real data <span class="pb-key pb-key-syn"></span> synthetic demo <span class="pb-key pb-key-here"></span> field on screen <span class="pb-key pb-key-ecl"></span> ecliptic (planets' path). Background stars are decorative.</p>
+      <p class="pb-legend small"><span class="pb-key pb-key-real"></span> real data <span class="pb-key pb-key-syn"></span> synthetic demo <span class="pb-key pb-key-here"></span> field on screen <span class="pb-key pb-key-ecl"></span> ecliptic (planets' path) <span class="pb-key pb-key-mw"></span> Milky Way (galactic plane). Background stars are decorative; the Milky Way and the ecliptic are drawn at their real positions.</p>
       <p class="pb-empty" id="pin-empty">🛰️ No pins yet. Find movers, select one and pin it: it will appear here.</p>
       <ul class="pin-list" id="pin-list"></ul>
       <p class="small"><span id="pin-status" role="status" aria-live="polite"></span> <button type="button" class="btn btn-small" id="pin-clear-btn">Remove all pins</button></p>
