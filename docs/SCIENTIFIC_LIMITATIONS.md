@@ -60,3 +60,10 @@ Numbers and their commands: [VALIDATION.md](VALIDATION.md).
 - The pointer's RA/Dec uses the flat-sky mapping of the grid (`pixelToSky`); it is not a full WCS of an original exposure.
 - The picture is an asinh-stretched display product; the pointer value and every measurement read the float pixels, never the picture.
 - Difference mode subtracts the mean of the other survey passes; a mover that stays put within one pass is not subtracted away by its own pass, but a mover that crosses its own position in another pass leaves a residual.
+
+## Learn view
+
+- "Slower on the sky means farther" holds only for bodies on similar orbits seen from a similar geometry; the step says so. It is a teaching rule, not a distance measurement.
+- The "not a known asteroid" item of the checklist is never evaluated in the app (no SkyBoT query in 4.0); it is shown as "not checked".
+- The game scores the distance to the injected (true) position of a synthetic mover; the hit radius (2.5 px) is a teaching choice, not a measurement error.
+- The Tombaugh/Pluto 1930 reference is from memory and marked [unverified] in both languages.

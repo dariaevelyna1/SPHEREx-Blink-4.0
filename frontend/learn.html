@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en" data-view="learn" data-theme="night">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SPHEREx Blink · Learn</title>
+  <meta name="description" content="A short guided story with a game: how blinking two sky pictures reveals things that move.">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/learn.css">
+  <script type="module" src="js/learn/main.js"></script>
+</head>
+<body class="story-page">
+  <a class="skip" href="#step">Skip to the step</a>
+
+  <header class="site-header story-header" id="site-header">
+    <a class="brand" href="index.html">SPHEREx Blink <span class="brand-ver">4.0</span></a>
+    <nav class="view-switch" aria-label="Interface">
+      <a href="learn.html" data-view-link="learn" aria-current="page">Learn</a>
+      <a href="science.html" data-view-link="science">Science</a>
+    </nav>
+    <div class="lang" role="group" aria-label="Language" id="lang-group">
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-lang="ro" aria-pressed="false">RO</button>
+    </div>
+    <p class="badges">
+      <span id="badge-data" class="badge badge-data" data-kind="none">NO DATA</span>
+      <span id="badge-backend" class="badge badge-backend" data-ok="pending">backend · checking</span>
+    </p>
+  </header>
+
+  <nav class="stepper" aria-label="Your progress" id="stepper">
+    <ol id="stepper-list" class="stepper-list"></ol>
+    <p id="stepper-count" class="stepper-count" aria-live="polite"></p>
+  </nav>
+
+  <main class="story" id="story">
+    <section class="step" id="step" tabindex="-1" aria-labelledby="step-title">
+      <h1 id="step-title">SPHEREx Blink</h1>
+      <noscript><p class="failure">This story needs JavaScript.</p></noscript>
+    </section>
+  </main>
+
+  <footer class="story-nav">
+    <button type="button" id="back" class="ghost">Back</button>
+    <button type="button" id="open-glossary" class="ghost">Glossary</button>
+    <button type="button" id="next" class="primary">Next</button>
+  </footer>
+
+  <dialog id="glossary" class="glossary" aria-labelledby="glossary-title">
+    <h2 id="glossary-title">Glossary</h2>
+    <dl id="glossary-list"></dl>
+    <form method="dialog"><button type="submit" id="close-glossary" class="primary">Close</button></form>
+  </dialog>
+</body>
+</html>

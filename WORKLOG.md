@@ -1,4 +1,4 @@
-NEXT STEP: do P3 (Learn narrative MVP in English: frontend/learn.html, css/learn.css, js/learn/; stepper of 8 steps, hunt-the-mover game, glossary dialog).
+NEXT STEP: do P4 (index.html view chooser, tests/test_structure.mjs structural-difference test, tests/test_theme.mjs contrast/token test, CREDITS asset check, e2e + a11y run of both views).
 
 # WORKLOG: SPHEREx Blink 4.0
 
@@ -122,3 +122,19 @@ and 3.0's whole page layout, HTML and CSS (not allowed to be copied).
 - WHY: four panels in one CSS grid with named areas (controls `nav`, viewer `main`, inspector `aside`, timeline section), so selection in one
   panel updates the others and nothing is hidden behind a step; the layout was designed fresh (3.0 layout/CSS not copied).
 - WHAT REMAINS: P3 onward. Not in P2: zoom/pan, admin token entry (P6), a colour/contrast test for the tokens (planned for P4 as `tests/test_theme.mjs`).
+
+## P3 Learn narrative MVP (with Romanian strings)
+
+- 2026-11-14 (local). Status: DONE. Commit: "P3 Learn narrative" (see `git log`).
+- WHAT: `frontend/learn.html`, `css/learn.css`, `js/learn/model.js` (pure: steps, game, checklist, farther mover, progress), `js/learn/strings.js`
+  (EN + RO tables, same keys), `js/learn/main.js` (DOM), `tests/test_learn.mjs`; fix in `css/base.css`: the on-picture REAL/SYNTHETIC label had
+  zero height (the sky frame has `line-height: 0`), so its colour did not show; it now has its own line height (affects both views).
+- HOW: `tests/test_learn.mjs` 28 checks (one test point was wrong on the first run: a "far" miss at (2,2) is only 14 px from mover A in field C;
+  the point was moved to (2,45), the check itself was not changed). Browser run at 375x812 (Claude browser pane): step 4 game: a far tap ->
+  "Not there: far away.", a tap on mover B -> "Hit! 82 points, 2 tap(s)."; RO steps 5-8 load with the SINTETIC label on each picture,
+  checklist verdicts "trecut | trecut | trecut | neverificat…", farther = B; glossary opens with 7 entries; URL keeps `?lang=ro&step=8`;
+  no console errors. `node scripts/run_tests.mjs` all pass; prepush PASS. NOT run: a real phone, a screen reader, Safari/Firefox.
+- WHY: a separate shell (header + stepper `nav` with `ol` + `main` with one `section` + footer nav + `dialog`), built step by step, so the
+  navigation model is a sequence and not panels; Romanian was written now with the English (cheap, and part of local impact), ahead of P7.
+- WHAT REMAINS: the shared header badges are English in both languages (RO page shows "SYNTHETIC" in the header and "SINTETIC" on the picture);
+  the worksheet (P7); scoring by time is not implemented (score = distance and tries only).

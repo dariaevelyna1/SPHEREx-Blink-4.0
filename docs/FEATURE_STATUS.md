@@ -15,6 +15,6 @@ What works, checked by which command. "Works" means the named test passes; nothi
 | Storage interface: `LocalDirStore`, `MemoryStore` (fake) | works | `backend/tests/test_edu.py` |
 | Public-repository gate (no FITS, secrets, e-mail addresses, uncredited assets) | works | `tests/test_prepush.mjs`, `node scripts/prepush_check.mjs` |
 | Science workspace (`science.html`): sequence list, Blink/Difference/Stack/Trail, playback, stretch, timeline by pass, inspector (image, pointer, provenance), candidate table with injected-truth match, in-browser search, real results as numbers, badges, keyboard, failures shown | works | `tests/test_science_model.mjs` (numbers); manual browser run 2026-11-14 (Chrome pane, 1440x900 and 800x600) |
-| Learn narrative, game, glossary | not built yet | - |
+| Learn narrative (`learn.html`): 8-step stepper with `?step=`, one question per step, hunt-the-mover game with score and 3 tries, detector result vs your tap, is-it-a-planet checklist (unchecked items said so), which-is-farther, free explore, glossary dialog, EN and RO strings, SYNTHETIC on every picture, reduced motion stops auto-blink | works | `tests/test_learn.mjs`; manual browser run 2026-11-14 at 375x812 (EN and RO, game hit/miss, steps 5-8, glossary) |
 | Backend `full` profile: Google Cloud Storage store, archive retrieval, processing | not built yet | - |
 | Dockerfile, deployment smoke test | not built yet: **no cloud readiness is claimed** | - |
