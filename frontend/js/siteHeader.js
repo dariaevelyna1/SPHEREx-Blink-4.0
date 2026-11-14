@@ -39,7 +39,7 @@ const pages = [["overview", "Home", "overview.html"], ...(mode ? MODES[mode].pag
 
 const nav = document.createElement("nav");
 nav.id = "project-nav";
-nav.setAttribute("aria-label", mode ? `${MODES[mode].label} pages` : "Project pages");
+nav.setAttribute("aria-label", "Project pages");            // the chip below names the mode
 if (mode) {
   const chip = document.createElement("span");
   chip.className = `mode-chip mode-chip-${mode}`;
