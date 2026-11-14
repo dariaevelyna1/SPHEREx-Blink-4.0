@@ -302,6 +302,7 @@
           <button type="button" class="btn btn-small" id="mover-follow-btn" aria-pressed="false" title="Keep the candidate in the middle of the picture while the images change (Blink and Difference). Moving the picture by hand, or Fit, stops it">Follow it</button>
           <button type="button" class="btn btn-small" id="mover-map-btn">Check in sky map</button>
           <button type="button" class="btn btn-small" id="mover-spectrum-btn" title="Measure the candidate in every image, where it is on that image's date, and plot flux against wavelength">Spectrum along its path</button>
+          <button type="button" class="btn btn-small btn-primary" id="pin-report-btn" title="Pin this candidate to the Discovery Pin Board under your observer name (kept in this browser only)" disabled>📌 Pin &amp; report object</button>
         </div>
       </div>
 
@@ -421,6 +422,49 @@
         <p class="muted small" id="aladin-status" aria-live="polite"></p>
         <p class="muted small" id="sky-geo-note" hidden></p>
       </div>
+    </section>
+
+    <!-- ============ Cosmic Missions (features/missions.js, missionsPinView.js) ============ -->
+    <section class="panel missions" id="missions" aria-labelledby="missions-title">
+      <h2 id="missions-title">Cosmic Missions</h2>
+      <p class="muted">A random mission each visit: short tasks that teach the blink method, proper motion, parallax and the search for a distant planet with the tools on this page. Progress is kept in this browser only.</p>
+      <article class="mission-card" id="mission-card" aria-live="polite">
+        <p class="muted small" id="mission-category"></p>
+        <h3 id="mission-title"></h3>
+        <p id="mission-story"></p>
+        <p><strong>Objective:</strong> <span id="mission-objective"></span></p>
+        <p class="mission-feedback" id="mission-feedback" hidden></p>
+        <p class="mission-actions">
+          <a class="btn btn-small" id="mission-go" href="#"></a>
+          <button type="button" class="btn btn-small btn-primary" id="mission-done-btn">I did it</button>
+          <button type="button" class="btn btn-small" id="mission-random-btn">Load random mission</button>
+        </p>
+      </article>
+      <p class="small"><span id="mission-progress"></span> <progress id="mission-progress-bar" value="0" max="1"></progress>
+        <button type="button" class="btn btn-small" id="mission-reset-btn">Reset progress</button></p>
+    </section>
+
+    <!-- ============ Discovery Pin Board (features/pinBoard.js, missionsPinView.js) ============ -->
+    <section class="panel pin-board" id="pin-board" aria-labelledby="pin-board-title">
+      <h2 id="pin-board-title">Discovery Pin Board</h2>
+      <p class="muted">Select a candidate and press <strong>📌 Pin &amp; report object</strong>, then type an observer name: no account. A pin is a <strong>report of a candidate, not a discovery</strong>. Pins are stored <strong>in this browser only</strong> and are seen by anyone using this browser; nothing is sent anywhere. Each pin has a SHA-256 hash of its own text, which shows it was not edited afterwards; it is not a proof of priority.</p>
+      <svg id="pin-map" class="pin-map" viewBox="0 0 360 180" role="img" aria-label="All-sky map of the pins (RA 360° to 0° left to right, Dec +90° top)">
+        <rect width="360" height="180" class="pin-map-bg"/>
+        <path class="pin-map-grid" d="M0 45H360M0 90H360M0 135H360M90 0V180M180 0V180M270 0V180"/>
+        <text x="4" y="176" class="pin-map-label">RA 360°</text><text x="356" y="176" text-anchor="end" class="pin-map-label">0°</text>
+      </svg>
+      <p class="muted small" id="pin-empty">No pins yet.</p>
+      <ul class="pin-list" id="pin-list"></ul>
+      <p class="small"><span id="pin-status" role="status" aria-live="polite"></span> <button type="button" class="btn btn-small" id="pin-clear-btn">Remove all pins</button></p>
+      <dialog id="pin-dialog" class="pin-dialog" aria-labelledby="pin-dialog-title">
+        <form id="pin-form" method="dialog">
+          <h3 id="pin-dialog-title">Pin &amp; report this candidate</h3>
+          <label for="pin-name">Enter observer name / handle:</label>
+          <input id="pin-name" name="observer" autocomplete="nickname" maxlength="40" placeholder="Alex_Space99" required>
+          <p class="small" id="pin-name-error" role="alert"></p>
+          <p><button type="submit" class="btn btn-primary btn-small">Pin it</button> <button type="button" class="btn btn-small" id="pin-cancel">Cancel</button></p>
+        </form>
+      </dialog>
     </section>
 
     <!-- ============ 5. Planet X Lab (features/planetLab.js, planetLabView.js, planetLabWorker.js) ============ -->

@@ -1321,3 +1321,23 @@ html[data-theme] .hero-cta { background: var(--text); border-color: var(--text);
 html[data-theme] .hero-cta:hover { background: var(--accent); }
 html[data-theme] .stage, html[data-theme] .chart { color-scheme: dark; --bg: #0B0F19; --bg-2: #101724; --surface: #141D2B; --raised: #1E2A3A; --field: #0B0F19; --border: #536070; --control-border: #8D9AAD; --text: #F6F7F9; --text-muted: #CDD4DF; --text-faint: #9CA8B7; --accent: #F4F6F8; --accent-hi: #F4F6F8; --accent-text: #F4F6F8; --accent-rgb: 244 246 248; --accent-2: #CDD4DF; --alt-rgb: 205 212 223; --warn: #F5C451; --warn-rgb: 245 196 81; --danger: #FF9A9A; --success: #68D4A0; --bg-rgb: 11 15 25; --surface-rgb: 20 29 43; --text-rgb: 246 247 249; }
 html[data-theme] .site-footer { border-top: 1px solid var(--border); background: var(--bg-2); }
+
+/* ---------- Cosmic Missions and the Discovery Pin Board (features/missionsPinView.js) ---------- */
+.mission-card { border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--raised); padding: 14px 16px; margin: 10px 0; }
+.mission-card h3 { margin: 2px 0 8px; font-family: var(--font-head); }
+.mission-feedback { border-left: 3px solid var(--success); padding-left: 10px; }
+.mission-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+#mission-progress-bar { vertical-align: middle; accent-color: var(--accent); }
+.pin-map { width: 100%; max-width: 720px; height: auto; display: block; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+.pin-map-bg { fill: var(--chart-bg); }
+.pin-map-grid { stroke: #ffffff2e; stroke-width: .5; fill: none; }
+.pin-map-label { fill: #ffffffb3; font-size: 7px; font-family: var(--font-mono); }
+.pin-marker path { fill: var(--accent); stroke: #fff; stroke-width: .6; }
+.pin-marker circle { fill: #fff; }
+.pin-marker.is-synthetic path { fill: var(--text-faint); stroke-dasharray: 1.5 1; }
+.pin-list { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 8px; }
+.pin-item { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 10px; overflow-wrap: anywhere; }
+.pin-hash { font-family: var(--font-mono); font-size: .8em; color: var(--text-muted); }
+.pin-dialog { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); max-width: min(420px, calc(100vw - 32px)); }
+.pin-dialog input { width: 100%; box-sizing: border-box; padding: 6px 8px; background: var(--field); color: var(--text); border: 1px solid var(--control-border); border-radius: 6px; }
+#pin-name-error { color: var(--danger); }
