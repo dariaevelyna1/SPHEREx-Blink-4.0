@@ -105,3 +105,6 @@ One line per feature, from the code and the tests as they are on branch `blink-2
 | Playwright | not used: a new library and a browser download. `scratch/e2e_smoke.mjs` drives Chrome or Edge over the DevTools Protocol with Node only |
 | A hosted backend, rate and size limits, HTTPS | see [DEPLOYMENT.md](DEPLOYMENT.md) section 4 |
 | Rate limiting and request size limits on the backend | see [PROJECT_AUDIT.md](PROJECT_AUDIT.md) A3 |
+
+- **Cosmic Missions** (`features/missions.js`, `missionsPinView.js`, `#missions`): 19 missions in 5 categories, a random one per visit or on "Load random mission" (avoids recent and completed ones), self-reported progress in localStorage. Tested: `scratch/test_missions_pins.mjs`.
+- **Discovery Pin Board** (`features/pinBoard.js`, `#pin-board`): "📌 Pin & report object" on a selected mover, an observer name typed in a `<dialog>` (no account), pins on an all-sky map and a list, each with a SHA-256 of its own text. Stored in this browser only. Tested: `scratch/test_missions_pins.mjs`; checked in the browser on the synthetic Barnard demo.

@@ -24,6 +24,7 @@ import { setupBundle } from "./features/bundleView.js";
 import { fetchSurvey as askSurvey } from "./features/surveyCoverage.js";
 import { setupSolarSystem } from "./features/solarSystemView.js";
 import { setupAssistant } from "./features/assistantView.js";
+import { setupMissions, setupPinBoard } from "./features/missionsPinView.js";
 import { runTask, isCancelled } from "./features/workerClient.js";
 import { estimateSearch, describeEstimate } from "./features/searchCost.js";
 import { runSearchTask } from "./features/searchTasks.js";
@@ -894,6 +895,11 @@ const MIN_PASSES = 3;                      // same rule as in movers.js: a third
 let textAnalysis = null;                   // the text analysis (section 9), set up below; its candidate table is refreshed when the list changes
 let movers = [];                           // candidates for the detector on screen, best first
 let selectedMover = -1;
+setupMissions();
+const pinBoard = setupPinBoard({
+  getCandidate: () => (selectedMover >= 0 ? movers[selectedMover] ?? null : null),
+  getContext: () => ({ realData: DATA_SOURCE === "api", field: { ra: currentQuery.ra, dec: currentQuery.dec, fov: currentQuery.fov, det: currentQuery.det } }),
+});
 let assistant = null;                      // the explainer (features/assistantView.js), set up further down
 let planetLab = null;                      // the Planet X Lab (features/planetLabView.js), set up further down
 let moversCatalogueChecked = false;        // was SIMBAD consulted for the list on screen?
@@ -1306,6 +1312,7 @@ function selectMover(k) {
   selectedMover = k;
   planetLab?.refresh();                             // the lab compares the motions of the one selected
   assistant?.refresh();
+  pinBoard?.refresh();
   document.querySelectorAll("#mover-list .mover-item").forEach((b) =>
     b.setAttribute("aria-pressed", String(Number(b.dataset.index) === k)));
   player.setCandidates(movers, k);
