@@ -379,6 +379,54 @@ export const STEP_WHY = Object.freeze({
 });
 
 export const missionWhy = (m) => MISSION_WHY[m?.id] ?? "";
+
+/** For complete beginners: what each topic is about, in plain words, and an icon. Keyed by category text. */
+export const CATEGORY_INFO = Object.freeze({
+  [CATEGORIES.basics]: { icon: "🛰️", intro: "Before searching the sky you need to know your instruments. These missions show you around the workspace: how to choose a place in the sky, look at its pictures, zoom, and change how they are shown. Nothing here needs any astronomy knowledge.", learn: ["Choose a place in the sky", "Read and move through the pictures", "Adjust what you see"] },
+  [CATEGORIES.blink]: { icon: "✨", intro: "Telescopes photograph the same patch of sky on different days. Stars stay in the same place; things that are close to us, like asteroids, move. By flipping between the pictures you can spot what moved. These missions teach you that trick and the tools that do it for you.", learn: ["Spot a moving dot by eye", "Let the computer search for movers", "Check if a mover is already known"] },
+  [CATEGORIES.proper]: { icon: "☄️", intro: "Stars look fixed, but they all travel through space. A few are close enough that their drift shows up over months or years. In these missions you measure how fast and in which direction a real fast star moves.", learn: ["Measure a star's speed across the sky", "Read its direction", "Decide if a detection is real or a glitch"] },
+  [CATEGORIES.parallax]: { icon: "📐", intro: "As Earth goes around the Sun, nearby objects seem to wobble a little, once a year, the same way your thumb jumps when you look with one eye and then the other. The size of the wobble tells you the distance. These missions use that to measure how far things are.", learn: ["See Earth's yearly wobble in the data", "Turn a wobble into a distance", "Explore the Solar System to scale"] },
+  [CATEGORIES.infrared]: { icon: "🔭", intro: "Some astronomers think a big, cold planet may hide far beyond Neptune: a 'Planet X'. It would be faint and glow mostly in infrared light, which our eyes cannot see. These missions let you practise the search on a safe, simulated planet.", learn: ["Search for a slow, distant body", "Test what a search can and cannot find", "Work with infrared colours"] },
+  [CATEGORIES.sky]: { icon: "🗺️", intro: "Other telescopes have photographed the whole sky before. Comparing with their pictures and lists of known stars is the fastest way to check a find. These missions show you those maps and catalogues.", learn: ["Open an all-sky atlas", "Show known stars on your picture", "Ask NASA's archive what exists"] },
+  [CATEGORIES.data]: { icon: "💾", intro: "Science only counts when others can check it. These missions show you how to save your results as tables, share exactly what you see, and prove which data you used.", learn: ["Save results as a table", "Share a link to your view", "Make a proof file of your data"] },
+  [CATEGORIES.pro]: { icon: "📌", intro: "When you find something, you report it so others can confirm it, like reporting a hazard on a road map. These missions teach you to pin a find on the shared board with your name.", learn: ["Pin a find on the shared board", "Read a report's details", "Understand why honest labels matter"] },
+});
+
+/** A plain-language glossary for beginners. `match` finds the word in a mission's text. */
+export const BEGINNER_GLOSSARY = Object.freeze([
+  { term: "RA and Dec", match: /\b(RA|Dec|right ascension|declination)\b/i, simple: "The sky's address system, like longitude and latitude on Earth. RA goes around the sky (0 to 24 hours), Dec goes from the north pole (+90°) to the south pole (−90°)." },
+  { term: "Detector", match: /\bdetectors?\b/i, simple: "The camera chip inside the telescope. SPHEREx has six, each seeing a different band of infrared light (D1 to D6)." },
+  { term: "Infrared", match: /infrared/i, simple: "Light with longer waves than red light. Our eyes cannot see it, but warm and cold objects give it off. SPHEREx sees the sky in infrared." },
+  { term: "Pixel", match: /\bpixels?\b/i, simple: "One tiny square of a digital picture. On SPHEREx one pixel covers about 6 arcseconds of sky." },
+  { term: "Arcsecond (″)", match: /arcsec|″/i, simple: "A tiny angle on the sky: 1/3600 of a degree. The full Moon is about 1800 arcseconds wide." },
+  { term: "Blink", match: /\bblink/i, simple: "Showing pictures of the same sky one after another, so anything that moved seems to jump." },
+  { term: "Difference image", match: /difference/i, simple: "One picture minus another. Everything that stayed the same disappears; only changes are left." },
+  { term: "Candidate", match: /candidate/i, simple: "Something that might be interesting, but is not confirmed yet. A clue to check, not a discovery." },
+  { term: "Mover", match: /\bmovers?\b|moving/i, simple: "A dot that changes position between pictures taken on different dates." },
+  { term: "Asteroid", match: /asteroid/i, simple: "A rocky body that circles the Sun, much smaller than a planet. Thousands are known; most live between Mars and Jupiter." },
+  { term: "Catalogue", match: /catalogue|SIMBAD|Gaia/i, simple: "A big list of known stars and objects with their positions. Checking it tells you if something is already known." },
+  { term: "Proper motion", match: /proper motion|speed|″\/yr|arcseconds per year/i, simple: "How fast a star drifts across the sky, usually in arcseconds per year." },
+  { term: "Position angle", match: /position angle|compass|direction/i, simple: "The direction of motion on the sky, in degrees: 0° is north, 90° is east." },
+  { term: "Parallax", match: /parallax|wobble/i, simple: "The small yearly back-and-forth shift of a nearby object caused by Earth moving around the Sun. Smaller shift = farther away." },
+  { term: "AU", match: /\bAU\b/i, simple: "Astronomical Unit: the distance from Earth to the Sun, about 150 million km. Neptune is about 30 AU from the Sun." },
+  { term: "Planet X", match: /planet x|distant body|ninth/i, simple: "A hypothetical large planet far beyond Neptune. Nobody has found it; this app only practises the search, on simulated data." },
+  { term: "Simulated / synthetic", match: /simulat|synthetic|demo/i, simple: "Made by the computer for practice, not a real observation. The app always labels it." },
+  { term: "Signal-to-noise (S/N)", match: /S\/N|noise|significan|σ/i, simple: "How clearly something stands out from random speckles in the picture. Bigger is clearer." },
+  { term: "Spectrum", match: /spectrum|wavelength|colou?rs/i, simple: "How bright something is at each colour (wavelength) of light. It works like a fingerprint." },
+  { term: "Ecliptic", match: /ecliptic|solar system/i, simple: "The path across the sky where the Sun and planets travel. Most asteroids are near it." },
+  { term: "Injection test", match: /injection|fake objects|blind spots/i, simple: "Hiding fake objects in the pictures to see if the search finds them. It measures how good the search is." },
+  { term: "Archive (IRSA)", match: /IRSA|archive/i, simple: "NASA's online library where SPHEREx pictures are stored." },
+  { term: "Hash (SHA-256)", match: /hash|SHA-256|fingerprint/i, simple: "A short code computed from data. Change one bit of the data and the code changes completely, so it proves nothing was edited." },
+  { term: "CSV", match: /\bCSV\b|table/i, simple: "A simple table file that spreadsheets like Excel or Google Sheets can open." },
+  { term: "Field", match: /\bfield\b/i, simple: "The patch of sky you are looking at, usually a few arcminutes wide." },
+]);
+
+/** The glossary words a mission uses (for its "New words" box). */
+export function termsFor(mission, max = 6) {
+  const text = [mission.story, mission.objective, mission.successFeedback, MISSION_WHY[mission.id] ?? ""].join(" ");
+  return BEGINNER_GLOSSARY.filter((g) => g.match.test(text)).slice(0, max);
+}
+export const categoryInfo = (m) => CATEGORY_INFO[m?.category] ?? { icon: "🚀", intro: "", learn: [] };
 /** Why the learner does this step (before doing it). */
 export function stepWhy(s) {
   if (s.why) return s.why;

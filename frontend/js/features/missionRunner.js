@@ -2,7 +2,7 @@
 // highlights the control to use, ticks each step when the learner really does it, explains what just happened, asks for measurements
 // read off the page, and awards XP. DOM only; the missions and the checks are pure, in missions.js.
 
-import { findMission, stepMatches, checkMeasurement, STEP_NOTES, missionWhy, stepWhy, xpFor, totalXp, rankFor,
+import { findMission, stepMatches, checkMeasurement, STEP_NOTES, missionWhy, stepWhy, termsFor, categoryInfo, xpFor, totalXp, rankFor,
   loadProgress, saveProgress, markComplete, pickRandomMission, missionHref } from "./missions.js";
 
 const store = (() => { try { return window.localStorage; } catch { return null; } })();
@@ -55,7 +55,9 @@ export function startMissionRunner({ getCandidate = () => null, getCount = () =>
       <div class="mr-bar" role="progressbar" aria-valuemin="0" aria-valuemax="${n}" aria-valuenow="${Math.min(step, n)}" aria-label="Steps done"><span style="width:${(100 * Math.min(step, n) / n).toFixed(0)}%"></span></div>
       <div class="mr-body">
       ${!started ? `<p class="mr-section">📜 Mission briefing</p><p class="mr-story">${esc(mission.story)}</p>
+        <p class="mr-section">🧭 What is this about?</p><p class="mr-why-text">${esc(categoryInfo(mission).intro)}</p>
         <p class="mr-section">🔭 Why it matters</p><p class="mr-why-text">${esc(missionWhy(mission))}</p>
+        ${termsFor(mission).length ? `<details class="mr-words"><summary>📖 New words (${termsFor(mission).length}) · tap to read</summary><dl>${termsFor(mission).map((g) => `<dt>${esc(g.term)}</dt><dd>${esc(g.simple)}</dd>`).join("")}</dl></details>` : ""}
         ${mission.needsReal && !REAL ? `<p class="mr-warn">🛰️ <strong>Needs real SPHEREx data.</strong> This tool works only when the page runs with the backend on real images (Learn Mode → “Search the real sky”). On this synthetic demo it explains why it cannot run, so the mission cannot be finished here.</p>` : ""}
         <p class="mr-section">🧭 What you will do · ${n} steps</p>
         <ol class="mr-steps mr-steps-preview">${mission.steps.map((x, i) => `<li><span class="mr-dot" aria-hidden="true">${i + 1}</span><span>${esc(x.does)}</span></li>`).join("")}</ol>

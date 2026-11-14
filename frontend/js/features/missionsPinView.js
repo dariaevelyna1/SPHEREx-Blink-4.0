@@ -1,6 +1,6 @@
 // missionsPinView.js – the DOM part of missions.js (the mission card) and pinBoard.js (the pin board with its sky map and the observer-name dialog).
 
-import { missionWhy, missionsDatabase, pickRandomMission, missionHref, loadProgress, saveProgress, markComplete, noteShown } from "./missions.js";
+import { missionWhy, termsFor, categoryInfo, stepWhy, xpFor, missionsDatabase, pickRandomMission, missionHref, loadProgress, saveProgress, markComplete, noteShown } from "./missions.js";
 import { makePin, pinTag, loadPins, savePins, addPin, removePin, skyToMap, verifyPin, eclipticPoints, galacticToEquatorial, fieldOffsetArcmin, initials, timeAgo, decorativeStars } from "./pinBoard.js";
 import { formatRA, formatDec } from "../coords.js";
 import { sharedConfig, fetchSharedPins, pushSharedPin, mergePins } from "./pinSync.js";
@@ -11,12 +11,15 @@ const $ = (id) => document.getElementById(id);
 const store = (() => { try { return window.localStorage; } catch { return null; } })();
 const fmt = (x, d) => (Number.isFinite(x) ? x.toFixed(d) : "–");
 
-/** The mission card in Learn Mode: a random practical mission on every visit and on "Load random mission", plus the whole catalogue. */
+/** The mission card in Learn Mode: a random practical mission on every visit and on "Another random mission", with beginner explanations,
+ *  plus the whole catalogue as topic cards; a mission tile previews that mission in the card. */
 export function setupMissions() {
   const card = $("mission-card");
   if (!card) return null;
   let progress = loadProgress(store);
   let current = null;
+  let openCat = null;
+  const stars = (n) => "★".repeat(n) + "☆".repeat(3 - n);
 
   function renderCatalogue() {
     const box = $("mission-catalogue");
@@ -25,37 +28,85 @@ export function setupMissions() {
     for (const m of missionsDatabase) (groups.get(m.category) ?? groups.set(m.category, []).get(m.category)).push(m);
     box.textContent = "";
     for (const [cat, list] of groups) {
-      const det = document.createElement("details");
       const done = list.filter((m) => progress.completed.includes(m.id)).length;
-      const sum = document.createElement("summary"); sum.textContent = `${cat} · ${done}/${list.length}`;
-      const ul = document.createElement("ul");
-      for (const m of list) {
-        const li = document.createElement("li");
-        const a = document.createElement("a");
-        a.href = missionHref(m, location.search);
-        a.textContent = `${progress.completed.includes(m.id) ? "✓ " : ""}${m.title}`;
-        li.append(a, ` · level ${m.tier} · ${m.steps.length} steps${m.needsReal ? " · 🛰️ real data only" : ""}`);
-        ul.appendChild(li);
+      const info = categoryInfo(list[0]);
+      const topic = document.createElement("div");
+      topic.className = "cm-topic" + (openCat === cat ? " is-open" : "");
+      const head = document.createElement("button");
+      head.type = "button";
+      head.className = "cm-topic-head";
+      head.setAttribute("aria-expanded", String(openCat === cat));
+      head.innerHTML = `<span class="cm-topic-icon" aria-hidden="true">${info.icon}</span><span class="cm-topic-name">${esc(cat)}</span>
+        <span class="cm-topic-count">${done}/${list.length}</span><span class="cm-topic-bar"><span style="width:${(100 * done / list.length).toFixed(0)}%"></span></span>`;
+      head.addEventListener("click", () => { openCat = openCat === cat ? null : cat; renderCatalogue(); });
+      topic.appendChild(head);
+      if (openCat === cat) {
+        const p = document.createElement("p");
+        p.className = "cm-topic-intro";
+        p.textContent = info.intro;
+        const grid = document.createElement("div");
+        grid.className = "cm-tiles";
+        for (const m of list) {
+          const t = document.createElement("button");
+          t.type = "button";
+          const isDone = progress.completed.includes(m.id);
+          t.className = "cm-tile" + (isDone ? " is-done" : "") + (m.id === current?.id ? " is-current" : "");
+          t.innerHTML = `<span class="cm-tile-title">${isDone ? "✓ " : ""}${esc(m.title)}</span><span class="cm-tile-meta">${stars(m.tier)} · ${m.steps.length} steps${m.needsReal ? " · 🛰️ real data" : ""}</span>`;
+          t.addEventListener("click", () => { show(m); card.scrollIntoView({ behavior: "smooth", block: "start" }); });
+          grid.appendChild(t);
+        }
+        topic.append(p, grid);
       }
-      det.append(sum, ul);
-      box.appendChild(det);
+      box.appendChild(topic);
     }
+  }
+
+  function show(m) {
+    current = m;
+    progress = noteShown(progress, m.id);
+    saveProgress(store, progress);
+    render();
   }
 
   function render() {
     const m = current;
     const done = progress.completed.includes(m.id);
-    $("mission-category").textContent = `${m.category} · level ${m.tier} · ${m.steps.length} steps${m.needsReal ? " · 🛰️ needs real data" : ""}`;
-    $("mission-title").textContent = (done ? "✓ " : "") + m.title;
+    const info = categoryInfo(m);
+    $("mission-icon").textContent = info.icon;
+    $("mission-category").textContent = m.category;
+    $("mission-meta").innerHTML = `<span title="Difficulty">${stars(m.tier)}</span><span>⏱ about ${Math.max(2, m.steps.length * 2)} min</span><span>+${xpFor(m)} XP</span>${m.needsReal ? "<span>🛰️ needs real data</span>" : ""}${done ? "<span>✓ completed</span>" : ""}`;
+    $("mission-title").textContent = m.title;
     $("mission-story").textContent = m.story;
+    $("mission-intro").textContent = info.intro;
     $("mission-why").textContent = missionWhy(m);
+    const terms = termsFor(m);
+    const tbox = $("mission-terms");
+    tbox.textContent = "";
+    $("mission-term-def").textContent = terms.length ? "" : "No special words in this one.";
+    for (const g of terms) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "cm-term";
+      b.textContent = g.term;
+      b.addEventListener("click", () => {
+        tbox.querySelectorAll(".cm-term").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+        $("mission-term-def").innerHTML = `<strong>${esc(g.term)}:</strong> ${esc(g.simple)}`;
+      });
+      b.setAttribute("aria-pressed", "false");
+      tbox.appendChild(b);
+    }
     const ol = $("mission-steps-preview");
     ol.textContent = "";
-    for (const s of m.steps) { const li = document.createElement("li"); li.textContent = s.does; ol.appendChild(li); }
+    m.steps.forEach((st, i) => {
+      const li = document.createElement("li");
+      const why = stepWhy(st);
+      li.innerHTML = `<span class="cm-step-n" aria-hidden="true">${i + 1}</span><span><strong>${esc(st.does)}</strong>${why ? `<small>${esc(why)}</small>` : ""}</span>`;
+      ol.appendChild(li);
+    });
     $("mission-feedback").hidden = !done;
-    $("mission-feedback").textContent = m.successFeedback;
+    $("mission-feedback").textContent = `What you learned: ${m.successFeedback}`;
     $("mission-go").href = missionHref(m, location.search);
-    $("mission-go").textContent = done ? "Play this mission again" : "🚀 Start this mission";
+    $("mission-go").textContent = done ? "🔁 Play this mission again" : "🚀 Start this mission";
     $("cm-progress").textContent = `Missions completed: ${progress.completed.length} of ${missionsDatabase.length}`;
     $("cm-progress-bar").max = missionsDatabase.length;
     $("cm-progress-bar").value = progress.completed.length;
@@ -63,10 +114,7 @@ export function setupMissions() {
   }
 
   function loadRandom() {
-    current = pickRandomMission(Math.random, [...progress.recent, ...progress.completed, current?.id].filter(Boolean));
-    progress = noteShown(progress, current.id);
-    saveProgress(store, progress);
-    render();
+    show(pickRandomMission(Math.random, [...progress.recent, ...progress.completed, current?.id].filter(Boolean)));
   }
 
   $("mission-random-btn").addEventListener("click", loadRandom);

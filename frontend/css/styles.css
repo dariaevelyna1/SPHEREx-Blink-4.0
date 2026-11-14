@@ -1538,3 +1538,9 @@ html[data-theme] .site-footer { border-top: 1px solid var(--border); background:
 .pb-map-wrap:fullscreen .pb-popup { position: absolute; }
 .pb-key-mw { width: 18px; border-radius: 6px; background: linear-gradient(90deg, transparent, #c9d6ff, transparent); }
 @media (max-width: 640px) { .pin-map { min-height: 200px; } .pb-readout { display: none; } }
+.mr-words { margin: 8px 0; padding: 6px 10px; border-radius: 10px; background: var(--raised); font-size: .86rem; }
+.mr-words summary { cursor: pointer; font-weight: 700; }
+.mr-words dt { font-weight: 700; margin-top: 6px; }
+.mr-words dd { margin: 2px 0 0; color: var(--text-muted); }
+.mission-runner { font-size: .95rem; line-height: 1.5; }
+.mr-head h2 { font-size: 1.2rem; }

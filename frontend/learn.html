@@ -19,26 +19,50 @@
     </section>
 
     <!-- ============ Cosmic Missions (features/missions.js, missionsPinView.js; run in Science Mode by missionRunner.js) ============ -->
-    <section class="learn-section panel missions" id="missions" aria-labelledby="missions-title">
-      <div class="section-heading"><p class="learn-kicker">Hands-on training</p><h2 id="missions-title">🚀 Cosmic Missions</h2>
-      <p>Practical missions that teach you the platform by using it. Start a mission and Science Mode opens with your steps on screen; each step ticks itself when you really do it. A new random mission every visit. Progress stays on this device. The demo field is synthetic.</p></div>
-      <article class="mission-card" id="mission-card" aria-live="polite">
-        <p class="muted small" id="mission-category"></p>
-        <h3 id="mission-title"></h3>
-        <p id="mission-story"></p>
-        <p class="mission-why"><strong>🔭 Why it matters:</strong> <span id="mission-why"></span></p>
-        <p><strong>Your steps:</strong></p>
-        <ol id="mission-steps-preview" class="mission-steps"></ol>
-        <p class="mission-feedback" id="mission-feedback" hidden></p>
-        <p class="mission-actions">
-          <a class="learn-button learn-button-primary" id="mission-go" href="#">🚀 Start this mission</a>
-          <button type="button" class="learn-button" id="mission-random-btn">🎲 Load random mission</button>
-        </p>
+    <section class="learn-section cm" id="missions" aria-labelledby="missions-title">
+      <div class="cm-intro">
+        <p class="learn-kicker">Hands-on training · no experience needed</p>
+        <h2 id="missions-title">🚀 Cosmic Missions</h2>
+        <p class="cm-lead">New to astronomy? Start here. Each mission is a short, guided task on the real tools of this site. You do not need to know anything in advance: every step tells you what to press, why you press it, and what just happened.</p>
+        <ol class="cm-how" aria-label="How a mission works">
+          <li><span>1</span><strong>Pick a mission</strong><small>A random one is waiting below, or choose from the list.</small></li>
+          <li><span>2</span><strong>Follow the glowing steps</strong><small>Science Mode opens with a guide in the corner; the button to press glows.</small></li>
+          <li><span>3</span><strong>Learn and earn XP</strong><small>Each step explains itself, and the mission ends with what you learned.</small></li>
+        </ol>
+        <p class="cm-note">✦ The practice field is <strong>synthetic</strong>: pictures made by the computer, clearly labelled. A few missions need real NASA data and are marked 🛰️.</p>
+      </div>
+
+      <article class="cm-card" id="mission-card" aria-live="polite">
+        <div class="cm-card-side">
+          <span class="cm-icon" id="mission-icon" aria-hidden="true">🚀</span>
+          <p class="cm-category" id="mission-category"></p>
+          <p class="cm-meta" id="mission-meta"></p>
+        </div>
+        <div class="cm-card-main">
+          <h3 class="cm-title" id="mission-title"></h3>
+          <p class="cm-story" id="mission-story"></p>
+          <div class="cm-blocks">
+            <section class="cm-block"><h4>🧭 What is this about?</h4><p id="mission-intro"></p></section>
+            <section class="cm-block"><h4>🔭 Why it matters</h4><p id="mission-why"></p></section>
+          </div>
+          <section class="cm-block cm-words"><h4>📖 New words in this mission <small>tap a word</small></h4><div class="cm-terms" id="mission-terms"></div><p class="cm-term-def" id="mission-term-def" aria-live="polite"></p></section>
+          <h4 class="cm-steps-title">🧩 What you will do</h4>
+          <ol id="mission-steps-preview" class="cm-steps"></ol>
+          <p class="cm-feedback" id="mission-feedback" hidden></p>
+          <div class="cm-actions">
+            <a class="learn-button learn-button-primary cm-start" id="mission-go" href="#">🚀 Start this mission</a>
+            <button type="button" class="learn-button" id="mission-random-btn">🎲 Another random mission</button>
+          </div>
+        </div>
       </article>
-      <p class="small"><strong id="cm-progress"></strong> <progress id="cm-progress-bar" value="0" max="1"></progress>
-        <button type="button" class="text-button" id="mission-reset-btn">Reset progress</button></p>
-      <h3>All missions</h3>
-      <div id="mission-catalogue" class="mission-catalogue"></div>
+
+      <div class="cm-progress">
+        <strong id="cm-progress"></strong>
+        <progress id="cm-progress-bar" value="0" max="1"></progress>
+        <button type="button" class="text-button" id="mission-reset-btn">Reset progress</button>
+      </div>
+      <h3 class="cm-all-title">All missions <small>pick a topic, then a mission to preview it above</small></h3>
+      <div id="mission-catalogue" class="cm-catalogue"></div>
     </section>
 
     <div class="learn-layout">
