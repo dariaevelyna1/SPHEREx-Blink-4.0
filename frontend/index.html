@@ -302,7 +302,7 @@
           <button type="button" class="btn btn-small" id="mover-follow-btn" aria-pressed="false" title="Keep the candidate in the middle of the picture while the images change (Blink and Difference). Moving the picture by hand, or Fit, stops it">Follow it</button>
           <button type="button" class="btn btn-small" id="mover-map-btn">Check in sky map</button>
           <button type="button" class="btn btn-small" id="mover-spectrum-btn" title="Measure the candidate in every image, where it is on that image's date, and plot flux against wavelength">Spectrum along its path</button>
-          <button type="button" class="btn btn-small btn-primary" id="pin-report-btn" title="Pin this candidate to the Discovery Pin Board under your observer name (kept in this browser only)" disabled>📌 Pin &amp; Report Object (Waze Style)</button>
+          <button type="button" class="btn btn-small btn-primary" id="pin-report-btn" title="Pin this candidate to the Discovery Pin Board under your observer name (kept in this browser only)" disabled>📌 Pin &amp; Report Object</button>
           <p class="pin-known-note" id="pin-known-note" role="status" hidden></p>
         </div>
       </div>
@@ -334,6 +334,11 @@
     </section>
 
     <!-- ============ 3. Measure (spectrum + light curve) ============ -->
+    <nav class="ws-toc" aria-label="More tools on this page">
+      <span class="ws-toc-title">More tools</span>
+      <a href="#pin-board">📌 Pin Board</a><a href="#planet-lab">🪐 Planet X Lab</a><a href="#sky-explorer">🗺️ Sky map</a><a href="#solar-system">☀️ Solar System</a>
+      <a href="#assistant">💬 Explain a candidate</a><a href="#observation-tools">🔭 Observation tools</a><a href="#text-analysis">📋 Tables</a>
+    </nav>
     <section class="panel measure" aria-labelledby="measure-title">
       <h2 id="measure-title">Source measurements</h2>
       <p class="muted" id="measure-hint">
@@ -428,10 +433,10 @@
     <!-- ============ Discovery Pin Board (features/pinBoard.js, missionsPinView.js) ============ -->
     <section class="panel pin-board" id="pin-board" aria-labelledby="pin-board-title">
       <div class="pb-head">
-        <div><p class="pb-kicker">Pro laboratory · no login</p><h2 id="pin-board-title">📌 Discovery Pin Board</h2></div>
+        <div><p class="pb-kicker">Shared with everyone</p><h2 id="pin-board-title">📌 Discovery Pin Board</h2></div>
         <div class="pb-stats" id="pin-stats" aria-live="polite"></div>
       </div>
-      <p class="muted">Like reporting something on a road map: run a search, select a moving object that is <strong>not a known object</strong>, press <strong>📌 Pin &amp; Report Object (Waze Style)</strong> and type your observer name. Every pin shows who reported it, where, when and its SHA-256 hash. Pins go on a <strong>shared board that everyone who opens this site sees</strong>, and they stay there: nobody can change or delete them from the site. Your observer name and the object's position become public. A pin is still a candidate until others confirm it.</p>
+      <p class="muted">Select an unexplained object in the search results and press <strong>📌 Pin &amp; Report Object</strong>. Pins are public and permanent; a pin is a candidate until others confirm it.</p>
       <div class="pb-toolbar">
         <div class="pb-toggle" role="group" aria-label="Map view">
           <button type="button" class="pb-view" data-view="sky" aria-pressed="true">🌌 All sky</button>
