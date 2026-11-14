@@ -1,7 +1,7 @@
 """SPHEREx Blink 4.0 backend: SERVING. One codebase, two profiles (BLINK_PROFILE=edu | full). Contract: docs/DATA_CONTRACT.md.
 
 Run (from the repository root):
-    backend/.venv/Scripts/python.exe -m uvicorn app:app --app-dir backend --port 8010
+    backend/.venv/Scripts/python.exe -m uvicorn app:app --app-dir backend --port 8010     (macOS/Linux: backend/.venv/bin/python)
 
 Every route is read-only over products that are already in the store. Archive retrieval and scientific processing are command-line jobs
 (blink/archive, blink/processing), never endpoints. Configuration comes from environment variables only (.env.example).
@@ -117,6 +117,8 @@ def create_app(settings: Settings | None = None, store: DataStore | None = None,
         given = request.headers.get("authorization", "")
         if not (given.startswith("Bearer ") and hmac.compare_digest(given[7:].encode(), settings.admin_token.encode())):
             return JSONResponse(status_code=403, content={"detail": "Not authorised."})
+        if hasattr(store, "clear"):
+            store.clear()                                    # the read-through cache: products may have been rewritten
         try:
             catalog.reload(load_approved(settings.approved_file) if settings.profile == "full" else None)
         except ApprovedError as exc:

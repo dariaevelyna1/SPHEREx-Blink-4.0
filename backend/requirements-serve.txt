@@ -1,0 +1,5 @@
+# What the SERVING container needs (Dockerfile). The same pins as requirements.txt; NumPy and Astropy are left out because serving never
+# processes (processing is an offline job on the author's machine). Licences: CREDITS.md.
+fastapi==0.162.7
+uvicorn==0.54.0
+google-cloud-storage==3.17.1

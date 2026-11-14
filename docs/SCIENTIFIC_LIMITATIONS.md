@@ -67,3 +67,16 @@ Numbers and their commands: [VALIDATION.md](VALIDATION.md).
 - The "not a known asteroid" item of the checklist is never evaluated in the app (no SkyBoT query in 4.0); it is shown as "not checked".
 - The game scores the distance to the injected (true) position of a synthetic mover; the hit radius (2.5 px) is a teaching choice, not a measurement error.
 - The Tombaugh/Pluto 1930 reference is from memory and marked [unverified] in both languages.
+
+## Full profile (processing)
+
+- Product pixels are resampled (bilinear) onto one grid: they are not original detector pixels, their noise is lower than the original's
+  (sigma 0.67 for sigma 1 per original pixel on the rotated test frames of `backend/tests/test_full.py`) and neighbouring pixels are correlated;
+  `stats.noiseSigma` describes the product, not the detector.
+- The band of a frame is the header's WAVEMIN/WAVEMAX, else the WCS-WAVE value at the image centre, else 3.0's rough nominal table
+  (`wavelengthSource` says which). For a cutout far from the image centre the WCS-WAVE value is not the band at the cutout.
+- The time scale of `MJD-OBS` is not verified (as in 3.0).
+- Processing labels a product REAL because its originals came through retrieval or the manifest; it cannot prove where a file came from.
+  The SHA-256 in the provenance lets anyone compare with the archive's file. Files whose header says SYNTHETIC TEST FILE are refused.
+- Retrieval checks a SHA-256 only when the plan gives one; otherwise it records the hash it computed (`sha256CheckedAgainstPlan: false`).
+- The rate limit is per server instance and in memory.

@@ -1,0 +1,16 @@
+# Only what the Dockerfile copies is needed; everything else stays out, above all data, caches and secrets.
+**
+!Dockerfile
+!backend/requirements-serve.txt
+!backend/app.py
+!backend/approved_sequences.json
+!backend/blink/**
+!frontend/data/edu/**
+backend/blink/**/__pycache__
+backend/data
+backend/.cache
+backend/.venv
+**/.env
+**/.env.*
+**/*.fits
+**/*.fits.gz

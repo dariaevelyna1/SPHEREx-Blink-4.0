@@ -56,3 +56,14 @@ equals `sha256Pixels`, lists only synthetic sequences, applies the pagination ca
 
 - Nothing on real SPHEREx data. The numbers shown as "REAL · derived numbers" in the interface are quoted from 3.0 (`frontend/data/edu/real_examples.json` names its source).
 - No completeness or false-alarm calibration; no timing benchmark.
+
+## P6. The full profile with fakes (no real data, no cloud, no archive)
+
+Command: `backend/.venv/bin/python -m pytest backend -q` -> 38 passed on 2026-11-14 (macOS, Python 3.12.10, Node 18.15.0).
+`backend/tests/test_full.py` writes 12 small FITS files (90 x 90 px, rotated TAN WCS, 6.14″/px, IMAGE + FLAGS, 4 passes of 3 frames half a
+year apart, 14 fixed stars and one mover at (+40, -25) ″/yr) in memory and passes them through the fake archive, retrieval, processing and
+the reused detector: the recovered motion is within 3 ″/yr of the injected one (assertion); the stored pixel hashes match the served bytes.
+
+Smoke test against a local full backend over a store built from the same synthetic FITS:
+`node scripts/smoke_test_full.mjs http://127.0.0.1:8013 --sequence test-field-d2 --origin http://localhost:8774` -> 20 PASS, including
+"the pixel route refuses (403)" and "rate limit answers 429 (after 60 requests)". This shows the checks work; it says nothing about a deployment.
