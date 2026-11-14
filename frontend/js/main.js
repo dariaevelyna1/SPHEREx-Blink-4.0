@@ -896,10 +896,10 @@ const MIN_PASSES = 3;                      // same rule as in movers.js: a third
 let textAnalysis = null;                   // the text analysis (section 9), set up below; its candidate table is refreshed when the list changes
 let movers = [];                           // candidates for the detector on screen, best first
 let selectedMover = -1;
-startMissionRunner();
+startMissionRunner({ getCandidate: () => (selectedMover >= 0 ? movers[selectedMover] ?? null : null), getCount: () => movers.length });
 const pinBoard = setupPinBoard({
   getCandidate: () => (selectedMover >= 0 ? movers[selectedMover] ?? null : null),
-  getContext: () => ({ realData: DATA_SOURCE === "api", field: { ra: currentQuery.ra, dec: currentQuery.dec, fov: currentQuery.fov, det: currentQuery.det } }),
+  getContext: () => ({ realData: DATA_SOURCE === "api", field: currentQuery ? { ra: currentQuery.ra, dec: currentQuery.dec, fov: currentQuery.fov, det: currentQuery.det } : null }),
 });
 let assistant = null;                      // the explainer (features/assistantView.js), set up further down
 let planetLab = null;                      // the Planet X Lab (features/planetLabView.js), set up further down
@@ -1718,6 +1718,7 @@ async function loadData(query) {
     updateSourceLabels();
     setComparisonFrames(frames);
     currentQuery = query;
+    pinBoard?.refresh();
     if (sky.isOpen) sky.update(query);
     if (frames.length === 0) {
       detSelect.innerHTML = '<option value="">No data</option>';

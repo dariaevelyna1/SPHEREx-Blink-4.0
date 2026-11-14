@@ -1,7 +1,7 @@
 // Tests for features/missions.js and features/pinBoard.js.   Run: node scratch/test_missions_pins.mjs
 import { webcrypto } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { missionsDatabase, pickRandomMission, missionHref, loadProgress, saveProgress, markComplete, noteShown, stepMatches } from "../frontend/js/features/missions.js";
+import { missionsDatabase, pickRandomMission, missionHref, loadProgress, saveProgress, markComplete, noteShown, stepMatches, checkMeasurement, rankFor, totalXp } from "../frontend/js/features/missions.js";
 import { cleanObserver, makePin, verifyPin, pinTag, addPin, removePin, loadPins, savePins, skyToMap, sha256Hex } from "../frontend/js/features/pinBoard.js";
 
 let failed = 0;
@@ -24,6 +24,10 @@ for (const m of missionsDatabase) {
 check("every control a step points to exists in Science Mode", missing.length === 0, missing.join("; "));
 const fake = (matches, label) => ({ closest: (s) => (s === "label" ? label : matches(s) ? {} : null) });
 check("step check: a click on the control, or on its label", stepMatches({ on: "#a" }, fake((s) => s === "#a")) && stepMatches({ on: "#r" }, fake(() => false, { control: { matches: (s) => s === "#r" } })) && !stepMatches({ on: "#a" }, fake(() => false)));
+const c0 = { speedArcsecPerYear: 10.29, positionAngleDeg: 355.6, compass: "N", nDet: 8 };
+check("measurement: speed within 5 %, wrong value refused", checkMeasurement({ field: "speedArcsecPerYear", tol: 0.05 }, "10.3", c0).ok && !checkMeasurement({ field: "speedArcsecPerYear", tol: 0.05 }, "3", c0).ok);
+check("measurement: comma decimals, compass letters, integers, count", checkMeasurement({ field: "speedArcsecPerYear", tol: 0.05 }, "10,3″/yr", c0).ok && checkMeasurement({ field: "compass" }, " n ", c0).ok && checkMeasurement({ field: "nDet", tol: 0 }, "8", c0).ok && !checkMeasurement({ field: "nDet", tol: 0 }, "7", c0).ok && checkMeasurement({ field: "count", tol: 0 }, "2", { count: 2 }).ok);
+check("XP and ranks", totalXp({ completed: ["blink-first-look", "proper-speed-trap"] }) === 150 && rankFor(0) === "Cadet Observer" && rankFor(4000) === "Planet X Hunter");
 check("random pick uses the rng", pickRandomMission(() => 0).id === missionsDatabase[0].id && pickRandomMission(() => 0.9999).id === missionsDatabase.at(-1).id);
 check("random pick avoids recent ones", pickRandomMission(() => 0, [missionsDatabase[0].id]).id === missionsDatabase[1].id);
 check("random pick falls back when all avoided", Boolean(pickRandomMission(Math.random, missionsDatabase.map((m) => m.id))));

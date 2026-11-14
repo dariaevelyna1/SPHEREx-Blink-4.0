@@ -24,12 +24,21 @@ export const CATEGORIES = Object.freeze({
 
 const on = (does, sel) => ({ does, check: { on: sel } });
 const see = (does, sel) => ({ does, check: { see: sel } });
+/** A measurement step: the learner reads a value off the page and types it; it is compared with the selected candidate's own number.
+ *  field: a candidate property (speedArcsecPerYear, positionAngleDeg, nDet, compass) or "count" (how many candidates the search listed). */
+const measure = (does, field, { unit = "", tol = 0, hint = "" } = {}) => ({ does, check: { measure: { field, unit, tol, hint } } });
 const FIND = on("Press Find movers (under the picture).", "#find-movers-btn");
 const LIST = see("Wait until the candidate list appears.", "#mover-list .mover-item");
 const PICK = on("Click the first candidate in the list.", "#mover-list .mover-item");
 const PLAY = on("Press Play under the picture.", "#play-btn");
 const PX = on("Press Planet X (simulated) in the left panel.", "#planetx-demo-btn");
 const DISTANT = on("Press Look for a distant body.", "#find-distant-btn");
+
+const SPEED = measure("Read the candidate's speed in its description and type it.", "speedArcsecPerYear", { unit: "″/yr", tol: 0.05, hint: "It is the first number after the candidate's label, e.g. “#1: 10.3″/yr”." });
+const PA = measure("Read its position angle (the direction, in degrees) and type it.", "positionAngleDeg", { unit: "°", tol: 2, hint: "Look for “position angle …°” in the description." });
+const COMPASS = measure("Which way is it moving? Type the compass point (N, NE, E, SE, S, SW, W, NW).", "compass", { hint: "The description says “toward …”." });
+const NDET = measure("In how many images was it seen? Type the number.", "nDet", { hint: "Look for “seen in … of … images”." });
+const COUNT = measure("How many candidates did the search list? Count them and type the number.", "count", { hint: "Count the items in the list under the picture." });
 
 const B = { query: BARNARD };
 const at = (hash) => ({ query: BARNARD, hash });
@@ -113,8 +122,20 @@ export const missionsDatabase = Object.freeze([
 
   // ===================== Proper motion
   M("proper-barnard", CATEGORIES.proper, 2, "The Runaway Star", "Barnard's Star is the fastest-moving star across our sky. Over a few years it slides visibly against the background.", B,
-    [PLAY, FIND, LIST, PICK, see("Read its speed in arcseconds per year.", "#mover-detail:not([hidden])")],
+    [PLAY, FIND, LIST, PICK, SPEED],
     "Proper motion is a star's sideways drift. Barnard's Star moves about 10 arcseconds a year (from memory) because it is close, about 6 light-years away."),
+  M("proper-speed-trap", CATEGORIES.proper, 2, "Speed Trap", "A star is speeding through the field. You are the traffic officer: clock it.", B,
+    [FIND, LIST, PICK, SPEED, NDET],
+    "Speed across the sky is measured in arcseconds per year (1″ = 1/3600 of a degree). The more images a track is seen in, the more the speed can be trusted."),
+  M("proper-compass", CATEGORIES.proper, 2, "Compass Reading", "Speed is half the story. A navigator also needs a heading.", B,
+    [FIND, LIST, PICK, COMPASS, PA],
+    "Position angle is measured from north (0°) through east (90°). On sky images east is to the LEFT when north is up: the mirror of a map, because we look up, not down."),
+  M("proper-headcount", CATEGORIES.proper, 1, "Headcount", "How busy is this patch of sky? Let the search count the movers.", B,
+    [FIND, LIST, COUNT],
+    "The search lists only tracks that are unlikely to be chance alignments of noise. Few candidates in a field is normal: most of the sky stands still."),
+  M("proper-detective", CATEGORIES.proper, 3, "Real or Glitch?", "A real star is seen again and again on its path. A glitch appears once. Gather the evidence like a detective.", B,
+    [FIND, LIST, PICK, NDET, on("Turn on the track layer to see its fitted path.", "#show-track"), on("Press Follow it and watch it on every image.", "#mover-follow-btn"), PLAY],
+    "Repeated detections along one straight path are the strongest evidence that a mover is real. A single bright pixel is usually a cosmic-ray hit."),
   M("proper-follow", CATEGORIES.proper, 1, "Ride Along", "Telescopes track their targets. You can too.", B,
     [FIND, LIST, PICK, on("Press Follow it.", "#mover-follow-btn"), PLAY],
     "Following keeps the mover centred while the background streams past."),
@@ -210,6 +231,71 @@ export const missionsDatabase = Object.freeze([
     [PX, DISTANT, LIST, PICK, on("Press 📌 Pin & Report Object (Waze Style).", "#pin-report-btn")],
     "Pins made on demo data are marked synthetic. Honest labels make a shared board trustworthy."),
 ]);
+
+/** "What just happened": what each control does, shown when the learner completes a step on it (a step's own `learn` wins). */
+export const STEP_NOTES = Object.freeze({
+  "#ra-input": "RA is measured eastward along the sky's equator, in hours (0–24h) or degrees (0–360°).",
+  "#dec-input": "Dec is the angle north (+) or south (−) of the sky's equator, from −90° to +90°.",
+  "#load-btn": "The app fetched every image of this field. In the demo the images are synthetic; with the real backend they come from IRSA.",
+  "#det-select": "Each detector covers its own slice of infrared wavelengths, so the same star can look brighter or fainter in another one.",
+  "#zoom-in-btn": "Zooming in draws each pixel bigger. One SPHEREx pixel covers about 6 arcseconds of sky.",
+  "#zoom-fit-btn": "Fit puts the whole field back on screen.",
+  "#frame-slider": "Each position of the slider is one image, taken on its own date.",
+  "#speed-input": "Faster blinking makes jumps easier to notice; slower lets you study each image.",
+  "#observation-select": "Every observation has a date and a wavelength; the timeline shows both.",
+  "#image-brightness": "Only the display changed. The numbers used for measurements stay the same.",
+  "#reset-view": "Display settings are back to their defaults.",
+  "#show-grid": "The grid lines are lines of constant RA and Dec.",
+  "#show-flags": "Flagged pixels are the ones the pipeline marked as unreliable.",
+  "#play-btn": "The images now play like a flip-book. Your eye is very good at catching what jumps.",
+  '#mode-switch input[value="blink"]': "Blink shows the images one after another, unchanged.",
+  '#mode-switch input[value="diff"]': "Difference subtracts images: what did not change turns grey, what changed turns bright or dark.",
+  '#mode-switch input[value="mean"]': "Stack averages all images: noise drops, faint fixed stars appear.",
+  '#mode-switch input[value="max"]': "Trail keeps the brightest value of each pixel: movers draw their path.",
+  '#mode-switch input[value="compare"]': "Compare lets you choose the two images and the operation yourself.",
+  "#find-movers-btn": "The search found the dots in every image, linked them into straight tracks, and kept only tracks unlikely to be chance.",
+  "#mover-list .mover-item": "Selecting a candidate rings it on the picture and draws its path; its description appears under the list.",
+  "#find-distant-btn": "This search fits a slow drift plus Earth's yearly parallax swing, the motion a far planet would have.",
+  "#planetx-demo-btn": "This loaded the synthetic demo with a simulated distant body hidden in it.",
+  "#mover-centre-btn": "The view is now centred on the candidate.",
+  "#mover-follow-btn": "The view now moves with the candidate from image to image.",
+  "#mover-spectrum-btn": "The candidate was measured on each image, at its position on that date, and plotted against wavelength.",
+  "#mover-map-btn": "The sky map now shows the candidate's position in other surveys.",
+  "#show-track": "The track is the straight path fitted to the candidate's positions.",
+  "#show-asteroids": "Known asteroids (from SkyBoT) are marked where they were on each image's date.",
+  "#show-catalogue": "Known stars and galaxies (SIMBAD/Gaia) are marked on the picture.",
+  "#movers-all-det": "Now the search runs on all six detectors and compares them.",
+  "#discover-btn": "Find everything measured every source in the field, moving or not.",
+  "#lab-compare-btn": "Three models were fitted to the positions: standing still, a straight line, and a line plus parallax.",
+  "#lab-run-btn": "Synthetic bodies were added to the images and the search was run again to see how many it recovers.",
+  "#aladin-btn": "The sky atlas opened at this field.",
+  "#survey-btn": "The IRSA archive was asked which SPHEREx images cover this position.",
+  "#ta-build-btn": "Every image, dot and candidate is now also a table you can read or save.",
+  "#bundle-btn": "The bundle records the data's SHA-256 fingerprints and the search settings, so someone else can repeat it.",
+  "#copy-link-btn": "The link to this exact view is on your clipboard.",
+  "#pin-report-btn": "The pin dialog opened. A pin records who reported what, where and when.",
+});
+
+export const xpFor = (mission) => 50 * (mission?.tier ?? 1);
+export const totalXp = (progress) => progress.completed.reduce((s, id) => s + xpFor(findMission(id)), 0);
+const RANKS = [[0, "Cadet Observer"], [300, "Blink Spotter"], [800, "Track Hunter"], [1500, "Field Astronomer"], [2500, "Survey Scientist"], [4000, "Planet X Hunter"]];
+export function rankFor(xp) {
+  let r = RANKS[0][1];
+  for (const [min, name] of RANKS) if (xp >= min) r = name;
+  return r;
+}
+
+/** Check a typed measurement against the true value. truth: the candidate (or { count }) the page reports. Returns { ok, expected }. */
+export function checkMeasurement(check, typed, truth) {
+  const field = check.field;
+  const want = field === "count" ? truth?.count : truth?.[field];
+  if (want == null) return { ok: false, expected: null };
+  if (typeof want === "string") return { ok: String(typed).trim().toUpperCase() === want.toUpperCase(), expected: want };
+  const got = Number(String(typed).replace(",", ".").replace(/[^0-9.eE+\-]/g, ""));
+  if (!Number.isFinite(got)) return { ok: false, expected: want };
+  const tol = check.tol < 1 && check.tol > 0 ? Math.abs(want) * check.tol : check.tol;
+  return { ok: Math.abs(got - want) <= Math.max(tol, field === "speedArcsecPerYear" ? 0.15 : 0), expected: want };
+}
 
 /** Pick a mission at random. `rng` returns [0,1) (Math.random by default); `avoidIds` are skipped when anything else is left. */
 export function pickRandomMission(rng = Math.random, avoidIds = [], db = missionsDatabase) {
