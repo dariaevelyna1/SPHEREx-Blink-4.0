@@ -2,7 +2,8 @@
 import { readFileSync } from "node:fs";
 import { check, done } from "./_t.mjs";
 import { MAX_TRIES, STEPS, checklist, fartherMover, huntGuess, newHunt, pairFrames, progress, stepIndex, warmth } from "../frontend/js/learn/model.js";
-import { GLOSSARY_KEYS, LANGS, STRINGS, t } from "../frontend/js/learn/strings.js";
+import { GLOSSARY_KEYS, LANGS, STRINGS, t, translateBadge } from "../frontend/js/learn/strings.js";
+import { WORKSHEET } from "../frontend/js/learn/worksheetStrings.js";
 
 const base = new URL("../frontend/data/edu/sequences/", import.meta.url);
 const doc = (id, f) => JSON.parse(readFileSync(new URL(`${id}/${f}`, base)));
@@ -62,5 +63,19 @@ check("a flagged pixel under the track fails the check", checklist(fastest, set,
 // how far?
 const far = fartherMover(C.truth);
 check("the farther mover is the slower one (B in field C)", far.index === 1 && far.speeds[1] < far.speeds[0]);
+
+// Romanian header badges: the words change, never the kind
+check("badge SYNTHETIC -> SINTETIC in RO, unchanged in EN", translateBadge("ro", "SYNTHETIC") === "SINTETIC" && translateBadge("en", "SYNTHETIC") === "SYNTHETIC");
+check("backend label words translated, profile and source kept", translateBadge("ro", "backend · unreachable") === "server · inaccesibil" && translateBadge("ro", "edu · STATIC · ok") === "edu · STATIC · ok");
+check("an unknown sentence passes through", translateBadge("ro", "something else") === "something else");
+
+// the worksheet
+const wk = (l) => Object.keys(WORKSHEET[l]).sort().join();
+check("worksheet: EN and RO have the same keys", wk("en") === wk("ro"));
+check("worksheet says SYNTHETIC in both languages", /SYNTHETIC/.test(WORKSHEET.en.note) && /SINTETICE/.test(WORKSHEET.ro.note));
+check("worksheet marks the history as unverified", /\[unverified\]/.test(WORKSHEET.en.history) && /\[neverificat\]/.test(WORKSHEET.ro.history));
+const candA = doc("syn-a-d2", "candidates.json").candidates[0];
+check("worksheet numbers match field A (8.5 px/yr, 6.1″/px, 52″/yr)", Math.abs(candA.speedPx - 8.5) < 0.05 && Math.abs(A.grid.pixelScaleArcsec - 6.1) < 0.05 && WORKSHEET.en.k3.includes(candA.speedArcsecPerYr.toFixed(1)), candA.speedArcsecPerYr.toFixed(2));
+check("worksheet calls a lead a lead", /lead/.test(WORKSHEET.en.q3b) && /pistă/.test(WORKSHEET.ro.q3b));
 
 done();

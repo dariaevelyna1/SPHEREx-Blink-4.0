@@ -15,6 +15,8 @@ What works, checked by which command. "Works" means the named test passes; nothi
 | Storage interface: `LocalDirStore`, `MemoryStore` (fake) | works | `backend/tests/test_edu.py` |
 | Public-repository gate (no FITS, secrets, e-mail addresses, uncredited assets) | works | `tests/test_prepush.mjs`, `node scripts/prepush_check.mjs` |
 | Entry page `index.html`: `?view=`, remembered view, screen width; keeps deep-link parameters; plain links without JS | works | manual browser run 2026-11-14 (`index.html?view=learn&seq=syn-b-d2` -> learn.html with `seq` kept; same for science) |
+| Classroom worksheet `learn-worksheet.html` (EN/RO, printable A4, teacher's key), linked from Learn step 8 | works on screen; printing to one A4 page not verified | `tests/test_learn.mjs` (keys, SYNTHETIC note, numbers match field A); browser run 2026-11-14 at 794x1123 |
+| Romanian header badges in Learn (SINTETIC, FĂRĂ DATE, server · inaccesibil) | works | `tests/test_learn.mjs`; browser run at 375x812 |
 | Structural difference of the two views (different shells, landmarks, navigation model, stylesheets, scripts) | works | `tests/test_structure.mjs` (23 checks; shown to fail when an `aside` is added to learn.html) |
 | Colours only through tokens; contrast in `night` and `paper` | works | `tests/test_theme.mjs` (45 checks; shown to fail on a colour literal in learn.css) |
 | Science workspace (`science.html`): sequence list, Blink/Difference/Stack/Trail, playback, stretch, timeline by pass, inspector (image, pointer, provenance), candidate table with injected-truth match, in-browser search, real results as numbers, badges, keyboard, failures shown | works | `tests/test_science_model.mjs` (numbers); manual browser run 2026-11-14 (Chrome pane, 1440x900 and 800x600) |

@@ -1,4 +1,4 @@
-NEXT STEP: do P7 (classroom worksheet learn-worksheet.html, RO header badges, QA pass: both views, both profiles, RO/EN, mobile, reduced motion); the Docker image is built and smoke-tested locally (not deployed).
+NEXT STEP: do P8 (final submission pack: update docs/SUBMISSION.md with what really works, final report to the author in Romanian).
 
 # WORKLOG: SPHEREx Blink 4.0
 
@@ -204,3 +204,21 @@ and 3.0's whole page layout, HTML and CSS (not allowed to be copied).
   synthetic FITS through the fake archive) -> all checks passed, including the 403 on pixels and the 429 rate limit.
 - So the claim allowed now is: "Dockerfile builds; the image passes the smoke test locally in both profiles; not deployed; the GCS store is
   tested only with a fake client". The image was not pushed anywhere.
+
+## P7 Polish: Romanian badges, worksheet, local impact, QA
+
+- 2026-11-14 (local). Status: DONE. Commit: "P7 polish" (see `git log`).
+- WHAT: `siteHeader.js` takes an optional `translate` (badge words only; the kind/status attributes that carry the colours never change);
+  `learn/strings.js` `translateBadge` + `ui.worksheet`; `learn-worksheet.html`, `css/worksheet.css`, `js/learn/worksheet.js`,
+  `js/learn/worksheetStrings.js`; Learn step 8 links the worksheet; `docs/EDUCATION.md` (what exists, what is NOT claimed: no partner,
+  no curriculum link, decision 6).
+- HOW: `tests/test_learn.mjs` now 36 checks (badge translation; worksheet keys EN = RO, SYNTHETIC note, [unverified] history, the
+  worksheet's 8.5 px/yr, 6.1″/px and 52.0″/yr match field A's stored candidate). All Node tests and pytest (38) pass; prepush PASS.
+  QA in the Claude browser pane: worksheet RO at 794x1123 (A4 width), no console errors, 1155 px tall on screen; Learn RO at 375x812:
+  data badge "SINTETIC" (kind still synthetic), aria-label in Romanian, links to Science and the worksheet keep `lang=ro`, no horizontal scroll;
+  Learn RO with `?api=http://localhost:9`: "server · inaccesibil", "FĂRĂ DATE", failure shown, nothing substituted; Science at 375x812:
+  SYNTHETIC, 2 candidate rows, 40 px timeline targets, no horizontal scroll. Both profiles: P6 (edu + full, in the container).
+  NOT run: printing (one-page fit is not verified; the print style uses 9.5 pt and 12 mm margins), `prefers-reduced-motion` in a browser
+  (the code path: Learn does not auto-blink, Science starts at 1 image/s; not observed), a screen reader, Safari/Firefox, a real phone.
+- WHY: translating only the words keeps the honesty signal (colour and kind) identical in both languages.
+- WHAT REMAINS: failure sentences from the data client are English inside the Romanian page; local-impact facts need the author (decision 6).

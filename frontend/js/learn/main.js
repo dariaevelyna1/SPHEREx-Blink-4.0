@@ -8,11 +8,11 @@ import { mountHeader } from "../shared/siteHeader.js";
 import { candidateAt, stretchAsinh } from "../shared/analysis.js";
 import { eventToPixel, paintGrey, paintMarks } from "../shared/skyCanvas.js";
 import { MAX_TRIES, STEPS, checklist, fartherMover, huntGuess, newHunt, pairFrames, progress, stepIndex, warmth } from "./model.js";
-import { GLOSSARY_KEYS, LANGS, t } from "./strings.js";
+import { GLOSSARY_KEYS, LANGS, t, translateBadge } from "./strings.js";
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids.filter((k) => k !== null && k !== undefined)); return e; };
-const header = mountHeader("learn");
+const header = mountHeader("learn", document, { translate: (text) => translateBadge(state.lang, text) });
 const query = parseQuery(location.search);
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const LANG_KEY = "blink4.lang";
@@ -188,7 +188,8 @@ const BUILD = {
     const link = el("a", { href: `science.html${keepQuery(location.search)}`, className: "primary", textContent: tr("ui.toScience") });
     link.addEventListener("click", () => { try { localStorage.setItem("blink4.view", "science"); } catch { /* not remembered */ } });
     setTimeout(show, 0);
-    return [el("label", {}, tr("explore.field") + " ", select), holder, link];
+    const sheet = el("a", { href: `learn-worksheet.html?lang=${state.lang}`, className: "ghost", textContent: tr("ui.worksheet") });
+    return [el("label", {}, tr("explore.field") + " ", select), holder, link, sheet];
   },
 };
 

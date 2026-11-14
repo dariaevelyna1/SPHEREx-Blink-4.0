@@ -7,7 +7,7 @@ export const STRINGS = {
   en: {
     "ui.back": "Back", "ui.next": "Next", "ui.glossary": "Glossary", "ui.close": "Close", "ui.step": "Step {n} of {total}",
     "ui.synthetic": "SYNTHETIC", "ui.lang": "Language", "ui.progress": "Your progress", "ui.flip": "Flip", "ui.play": "Blink", "ui.pause": "Stop",
-    "ui.image": "image {n}", "ui.toScience": "Open the Science workspace", "ui.loading": "Loading the pictures…", "ui.failed": "The pictures did not load:",
+    "ui.image": "image {n}", "ui.toScience": "Open the Science workspace", "ui.worksheet": "Classroom worksheet (printable)", "ui.loading": "Loading the pictures…", "ui.failed": "The pictures did not load:",
     "ui.syntheticNote": "Made by our code, not taken by a telescope. It has a hidden answer, so you can check yourself.",
 
     "still.title": "The sky is not still", "still.text": "Stars are so far away that they seem fixed. Things in our own Solar System are close, so they drift across the stars.",
@@ -56,7 +56,7 @@ export const STRINGS = {
   ro: {
     "ui.back": "Înapoi", "ui.next": "Înainte", "ui.glossary": "Glosar", "ui.close": "Închide", "ui.step": "Pasul {n} din {total}",
     "ui.synthetic": "SINTETIC", "ui.lang": "Limba", "ui.progress": "Progresul tău", "ui.flip": "Schimbă", "ui.play": "Clipește", "ui.pause": "Oprește",
-    "ui.image": "imaginea {n}", "ui.toScience": "Deschide spațiul de lucru Science", "ui.loading": "Se încarcă imaginile…", "ui.failed": "Imaginile nu s-au încărcat:",
+    "ui.image": "imaginea {n}", "ui.toScience": "Deschide spațiul de lucru Science", "ui.worksheet": "Fișă de lucru pentru clasă (de tipărit)", "ui.loading": "Se încarcă imaginile…", "ui.failed": "Imaginile nu s-au încărcat:",
     "ui.syntheticNote": "Făcută de codul nostru, nu fotografiată de un telescop. Are un răspuns ascuns, ca să te poți verifica.",
 
     "still.title": "Cerul nu stă pe loc", "still.text": "Stelele sunt atât de departe încât par fixe. Corpurile din Sistemul nostru Solar sunt aproape, așa că alunecă printre stele.",
@@ -111,3 +111,18 @@ export function t(lang, key, vars = {}) {
 }
 
 export const GLOSSARY_KEYS = ["gloss.blink", "gloss.mover", "gloss.spherex", "gloss.pass", "gloss.candidate", "gloss.synthetic", "gloss.pixel"];
+
+/** The shared header's badge words in the page language. Exact sentences first, then single words of the backend label. */
+const BADGE_RO = {
+  "SYNTHETIC": "SINTETIC", "REAL": "REAL", "NO DATA": "FĂRĂ DATE", "Data": "Date", "Backend": "Server",
+  "Made by this project's code. Not an observation.": "Făcut de codul acestui proiect. Nu este o observație.",
+  "No sequence is loaded.": "Nicio secvență încărcată.",
+  "Processed SPHEREx observations.": "Observații SPHEREx procesate.",
+  "Processed SPHEREx observations: derived numbers only, no pixels served.": "Observații SPHEREx procesate: doar cifre derivate, fără pixeli.",
+};
+const BADGE_WORDS_RO = [[/\bbackend\b/g, "server"], [/\bunreachable\b/g, "inaccesibil"], [/\bproblem\b/g, "problemă"], [/\bchecking\b/g, "se verifică"]];
+export function translateBadge(lang, text) {
+  if (lang !== "ro" || typeof text !== "string") return text;
+  if (text in BADGE_RO) return BADGE_RO[text];
+  return BADGE_WORDS_RO.reduce((s, [re, to]) => s.replace(re, to), text);
+}
