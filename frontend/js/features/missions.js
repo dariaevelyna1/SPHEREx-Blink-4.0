@@ -1,131 +1,217 @@
-// missions.js – the Cosmic Missions database and its random picker (pure: no DOM, no network; storage and the random source are injectable).
+// missions.js – the Cosmic Missions database: PRACTICAL missions that teach the platform by using it (pure: no DOM, no network).
 //
-// Every mission sends the learner to a tool that already exists in the workspace. `target` says what a mission loads:
-//   { kind: "demo" }                         the synthetic demo field (no query string; always labelled synthetic in the page)
-//   { kind: "query", query: "ra=..&..." }    a field by URL query (real only with ?data=api and a backend; otherwise the synthetic demo is shown)
-//   { kind: "section", hash: "#planet-lab" } a panel of the workspace
-// The physics in `successFeedback` is textbook material written from memory (marked "from memory" in docs/SCIENTIFIC_LIMITATIONS.md), not a measurement.
+// A mission is started from Learn Mode; it opens Science Mode (index.html) with ?mission=<id>, where missionRunner.js shows the steps one by one
+// and ticks each step itself when the learner really does it. Step checks:
+//   { on: "<css selector>" }   the learner clicks / changes / slides a control matching the selector
+//   { see: "<css selector>" }  an element matching the selector is on the page and visible (e.g. a result appeared)
+// `start` is where the mission opens: { query, hash }. Without a backend the field is the synthetic demo (the page labels it).
+// Physics in `successFeedback` is textbook material written from memory (docs/SCIENTIFIC_LIMITATIONS.md), not a measurement.
 
-export const MISSIONS_VERSION = "missions-1";
+export const MISSIONS_VERSION = "missions-2";
 
-const BARNARD = "ra=269.4462&dec=4.769&fov=5&det=D2";   // the Barnard's Star field used throughout docs/VALIDATION.md
+export const BARNARD = "ra=269.4462&dec=4.769&fov=5&det=D2";   // the Barnard's Star field of docs/VALIDATION.md
 
 export const CATEGORIES = Object.freeze({
+  basics: "Cockpit training: the workspace",
   blink: "Blink method / moving asteroids",
   proper: "Proper motion / fast stars",
-  parallax: "Parallax & distance",
+  parallax: "Parallax & distance in AU",
   infrared: "Deep infrared / Planet X simulations",
-  method: "Doing science honestly",
+  sky: "Sky maps & catalogues",
+  data: "Data, tables & sharing",
+  pro: "Pro lab: report what you find",
+});
+
+const on = (does, sel) => ({ does, check: { on: sel } });
+const see = (does, sel) => ({ does, check: { see: sel } });
+const FIND = on("Press Find movers (under the picture).", "#find-movers-btn");
+const LIST = see("Wait until the candidate list appears.", "#mover-list .mover-item");
+const PICK = on("Click the first candidate in the list.", "#mover-list .mover-item");
+const PLAY = on("Press Play under the picture.", "#play-btn");
+const PX = on("Press Planet X (simulated) in the left panel.", "#planetx-demo-btn");
+const DISTANT = on("Press Look for a distant body.", "#find-distant-btn");
+
+const B = { query: BARNARD };
+const at = (hash) => ({ query: BARNARD, hash });
+
+const M = (id, category, tier, title, story, start, steps, successFeedback) => ({
+  id, category, tier, title, story,
+  targetType: start.hash ? `workspace panel ${start.hash}` : "preset coordinates (Barnard's Star field)",
+  start, objective: steps.map((s) => s.does).join(" "), steps, successFeedback,
 });
 
 export const missionsDatabase = Object.freeze([
-  // ---------- 1. blink
-  { id: "blink-first-look", category: CATEGORIES.blink, tier: 1, title: "First Blink",
-    story: "In 1930 Clyde Tombaugh found Pluto by flipping between two photographs of the same sky. Stars stay put; anything that jumps is moving. Your turn.",
-    targetType: "demo", target: { kind: "demo" },
-    objective: "Press Play under the picture and watch the images blink. Find one dot that changes place.",
-    successFeedback: "Blinking turns motion into flicker: the eye ignores what stays fixed and notices what jumps. Every mover search in this app starts from this idea." },
-  { id: "blink-difference", category: CATEGORIES.blink, tier: 1, title: "Ghost Hunter",
-    story: "Subtract one image from the next and the stars cancel out. What is left behind is a ghost: a bright spot where something arrived and a dark one where it left.",
-    targetType: "demo", target: { kind: "demo" },
-    objective: "Switch the view to Difference and find a bright/dark pair of spots.",
-    successFeedback: "A difference image removes everything that did not change. A bright-dark pair is the signature of a moving object; a lone spot may be noise, a cosmic ray or a variable star." },
-  { id: "blink-find-movers", category: CATEGORIES.blink, tier: 2, title: "Let the Machine Look",
-    story: "Your eyes got tired. The computer can test every possible straight path across every image in seconds.",
-    targetType: "demo", target: { kind: "demo" },
-    objective: "Press Find movers and open the first candidate in the list.",
-    successFeedback: "The search links dots across images into straight tracks and asks how unlikely each track is by chance. What it returns is a candidate: a lead to check, not a discovery." },
-  { id: "blink-asteroid-check", category: CATEGORIES.blink, tier: 2, title: "Is It Already Known?",
-    story: "Thousands of asteroids cross the sky every night. Before you get excited, find out whether someone named yours already.",
-    targetType: "demo", target: { kind: "demo" },
-    objective: "Select a mover and read its asteroid check (the known-object line in its description).",
-    successFeedback: "Professional surveys always compare against catalogues of known objects first (SkyBoT for asteroids, SIMBAD and Gaia for stars). A match is not a failure: it shows the pipeline works." },
+  // ===================== Cockpit training
+  M("basics-load-field", CATEGORIES.basics, 1, "Point the Telescope", "Every observation starts with a place in the sky: two numbers, RA and Dec, like longitude and latitude for stars.", B,
+    [on("Click the RA box in the left panel.", "#ra-input"), on("Click the Dec box.", "#dec-input"), on("Press Load to fetch the images.", "#load-btn")],
+    "RA (right ascension) and Dec (declination) are the sky's coordinates. Loading a field asks for every image of that patch of sky, taken on different dates."),
+  M("basics-detector", CATEGORIES.basics, 1, "Choose Your Eye", "SPHEREx has six detectors, each seeing a different band of infrared light.", B,
+    [on("Pick another detector (D1 to D6).", "#det-select"), on("Press Load.", "#load-btn")],
+    "D1 sees the shortest infrared wavelengths, D6 the longest. Cool objects like brown dwarfs are brighter in the long-wavelength detectors."),
+  M("basics-zoom", CATEGORIES.basics, 1, "Magnifying Glass", "Faint things hide in tiny pixels. Learn to zoom like an astronomer.", B,
+    [on("Press + to zoom in.", "#zoom-in-btn"), on("Press − to zoom out.", "#zoom-out-btn"), on("Press Fit to see the whole image.", "#zoom-fit-btn")],
+    "Zoom changes how big the pixels are drawn, not the data. Fit shows the whole field so you never get lost."),
+  M("basics-frames", CATEGORIES.basics, 1, "Time Machine", "Each image was taken on a different day. The slider is your time machine.", B,
+    [on("Drag the image slider under the picture.", "#frame-slider"), on("Change the blink speed.", "#speed-input")],
+    "Stepping image by image shows exactly when something changed, instead of a blur of motion."),
+  M("basics-observation", CATEGORIES.basics, 1, "Pick a Date", "Jump straight to one observation from the list of dates.", B,
+    [on("Choose an observation in the date menu.", "#observation-select")],
+    "Each observation has a date and a wavelength. Knowing both matters: an object can change because it moved, or because the colour changed."),
+  M("basics-brightness", CATEGORIES.basics, 2, "Pull Out the Faint Ones", "The sky is mostly dark. Stretching the brightness reveals what hides in the noise.", B,
+    [on("Move the brightness slider.", "#image-brightness"), on("Move the contrast slider.", "#image-contrast"), on("Press Reset display.", "#reset-view")],
+    "Brightness and contrast only change how pixels are shown. Measurements always use the original numbers."),
+  M("basics-grid", CATEGORIES.basics, 1, "Sky Graph Paper", "Navigators need a grid. So do astronomers.", B,
+    [on("Turn on the coordinate grid.", "#show-grid"), on("Turn on the scale bar.", "#show-scalebar"), on("Turn on the centre crosshair.", "#centre-crosshair")],
+    "The grid shows RA and Dec lines; the scale bar shows how many arcseconds a length on screen covers."),
+  M("basics-flags", CATEGORIES.basics, 2, "Bad Pixel Patrol", "Detectors have flaws: hot pixels, cosmic-ray hits. The data mark them.", B,
+    [on("Turn on the flagged-pixel layer.", "#show-flags"), on("Tick 'skip flagged pixels'.", "#skip-flagged")],
+    "Flagged pixels are known to be unreliable. Skipping them avoids 'discovering' a cosmic-ray hit."),
+  M("basics-shortcuts", CATEGORIES.basics, 1, "Pilot's Shortcuts", "Pros fly with the keyboard.", B,
+    [on("Open the keyboard shortcuts list.", "#shortcuts-btn")],
+    "Space plays and pauses, the arrows step through images, + and − zoom. Shortcuts make long inspections faster."),
+  M("basics-tour", CATEGORIES.basics, 1, "Guided Flight", "Not sure where anything is? Take the guided tour.", B,
+    [on("Start the 1-minute tour.", "#tour-btn")],
+    "The tour points at each part of the workspace: loading data, the picture, the search buttons and the results."),
+  M("basics-theme", CATEGORIES.basics, 1, "Night Vision", "Observatories use dim light so eyes stay used to the dark. Pick the theme that suits you.", B,
+    [on("Choose another colour theme at the top.", "#theme-select")],
+    "Themes change only colours. Charts keep a dark background in every theme so faint features stay visible."),
 
-  // ---------- 2. proper motion
-  { id: "proper-barnard", category: CATEGORIES.proper, tier: 2, title: "The Runaway Star",
-    story: "Barnard's Star is the fastest-moving star across our sky. Over a few years it slides visibly against the background.",
-    targetType: "preset-coordinates", target: { kind: "query", query: BARNARD },
-    objective: "Load the Barnard's Star field, press Find movers and read the speed of the top candidate in arcseconds per year.",
-    successFeedback: "Proper motion is a star's sideways drift across the sky. Barnard's Star moves about 10 arcseconds a year (from memory), because it is close (about 6 light-years) and fast." },
-  { id: "proper-direction", category: CATEGORIES.proper, tier: 2, title: "Which Way, Captain?",
-    story: "Speed is only half the story. A navigator also needs a heading.",
-    targetType: "preset-coordinates", target: { kind: "query", query: BARNARD },
-    objective: "On the Barnard field, find the candidate's direction (position angle or compass point) in its description.",
-    successFeedback: "Position angle is measured from north through east. Two numbers, speed and angle, describe a star's motion across the sky." },
-  { id: "proper-follow", category: CATEGORIES.proper, tier: 1, title: "Lock On",
-    story: "Telescopes track their targets. You can too.",
-    targetType: "preset-coordinates", target: { kind: "query", query: BARNARD },
-    objective: "Select a mover and press Follow it, then play the blink.",
-    successFeedback: "Following a mover keeps it centred while the background streams past: you now see the sky from the star's point of view." },
-  { id: "proper-spectrum", category: CATEGORIES.proper, tier: 3, title: "Colours of a Wanderer",
-    story: "SPHEREx sees the sky in more than a hundred infrared colours. A moving star carries its colour with it.",
-    targetType: "preset-coordinates", target: { kind: "query", query: BARNARD },
-    objective: "Select a mover and press Spectrum along its path.",
-    successFeedback: "A spectrum is brightness against wavelength. Cool red dwarfs like Barnard's Star are brighter in the infrared; asteroids reflect sunlight and show different colours." },
+  // ===================== Blink method
+  M("blink-first-look", CATEGORIES.blink, 1, "First Blink", "In 1930 Clyde Tombaugh found Pluto by flipping between photographs of the same sky. Stars stay put; anything that jumps is moving.", B,
+    [on("Choose the Blink view.", '#mode-switch input[value="blink"]'), PLAY],
+    "Blinking turns motion into flicker: the eye ignores what stays fixed and notices what jumps."),
+  M("blink-difference", CATEGORIES.blink, 1, "Ghost Hunter", "Subtract one image from another and the stars cancel. What is left is a ghost: bright where something arrived, dark where it left.", B,
+    [on("Choose the Difference view.", '#mode-switch input[value="diff"]'), on("Drag the image slider.", "#frame-slider")],
+    "A difference image removes everything that did not change. A bright-dark pair is the signature of a mover; a lone spot may be noise or a cosmic ray."),
+  M("blink-stack", CATEGORIES.blink, 2, "Long Exposure", "Add all the images together: faint fixed stars get brighter, movers smear out.", B,
+    [on("Choose the Stack view.", '#mode-switch input[value="mean"]')],
+    "Stacking averages the images: noise goes down, so faint fixed sources stand out. A mover is spread along its path."),
+  M("blink-trail", CATEGORIES.blink, 2, "Leave a Trail", "What if every image left a footprint? Movers would draw lines.", B,
+    [on("Choose the Trail view.", '#mode-switch input[value="max"]')],
+    "Trail keeps the brightest value of each pixel over all images, so a mover draws its own path."),
+  M("blink-compare", CATEGORIES.blink, 3, "Two Dates, One Question", "Pick any two dates yourself and compare them like a detective.", B,
+    [on("Choose the Compare view.", '#mode-switch input[value="compare"]'), on("Pick image A.", "#cmp-a"), on("Pick image B.", "#cmp-b"), on("Choose how to combine them.", "#cmp-op")],
+    "Images far apart in time make slow movers easier to see; images in the same band avoid colour changes that look like motion."),
+  M("blink-find-movers", CATEGORIES.blink, 2, "Let the Machine Look", "Your eyes got tired. The computer can test every straight path across every image in seconds.", B,
+    [FIND, LIST, PICK],
+    "The search links dots across images into straight tracks and asks how unlikely each one is by chance. It returns candidates: leads to check."),
+  M("blink-centre", CATEGORIES.blink, 2, "Lock the Crosshairs", "Found something? Put it in the middle of your view.", B,
+    [FIND, LIST, PICK, on("Press Centre the picture on it.", "#mover-centre-btn")],
+    "Centring zooms on the candidate's position in the image shown, so you can inspect its pixels."),
+  M("blink-asteroid-check", CATEGORIES.blink, 2, "Is It Already Known?", "Thousands of asteroids cross the sky every night. Check whether yours already has a name.", B,
+    [on("Make sure the known-asteroids layer is on.", "#show-asteroids"), FIND, LIST, PICK, see("Read the candidate's description.", "#mover-detail:not([hidden])")],
+    "Surveys always compare with catalogues of known objects first (SkyBoT for asteroids, SIMBAD and Gaia for stars)."),
+  M("blink-layers", CATEGORIES.blink, 1, "Clean Screen", "Too many marks? Choose what is drawn on the picture.", B,
+    [FIND, LIST, on("Turn the 'Movers found' marks off.", "#show-candidates"), on("Turn them back on.", "#show-candidates")],
+    "Layers only draw on top of the image; turning them off never deletes results."),
+  M("blink-everything", CATEGORIES.blink, 3, "Census of the Field", "Not just movers: list every source in the field and sort them.", B,
+    [on("Press Find everything.", "#discover-btn"), see("Wait for the list of sources.", "#discover-list > *"), on("Change how the list is sorted.", "#discover-sort")],
+    "A census tells you what is normal in a field, so the unusual things stand out."),
+  M("blink-everything-table", CATEGORIES.blink, 3, "From Cards to Science", "Cards are friendly; tables are how science is checked.", B,
+    [on("Press Find everything.", "#discover-btn"), on("Switch to Table and plot.", "#discover-view-table"), on("Filter the list.", "#discover-filter")],
+    "Tables and plots compare many sources at once and show the outliers a picture hides."),
 
-  // ---------- 3. parallax
-  { id: "parallax-thumb", category: CATEGORIES.parallax, tier: 1, title: "The Thumb Trick",
-    story: "Hold up a thumb and close one eye, then the other. Your thumb jumps. Earth does the same thing with stars, using its orbit as the two eyes.",
-    targetType: "section", target: { kind: "section", hash: "#planet-lab" },
-    objective: "Open the Planet X Lab and read how it describes the Earth's parallax swing.",
-    successFeedback: "Parallax is the apparent shift of a nearby object as the observer moves. Earth's orbit gives a baseline of 2 AU (1 AU is about 150 million km)." },
-  { id: "parallax-distance", category: CATEGORIES.parallax, tier: 2, title: "Ruler of the Stars",
-    story: "Measure the swing, get the distance. That is how astronomers built the first rung of the cosmic distance ladder.",
-    targetType: "demo", target: { kind: "demo" },
-    objective: "Run Look for a distant body on the demo and read the distance the candidate's swing implies.",
-    successFeedback: "Distance in parsecs = 1 / parallax in arcseconds. For a body inside the Solar System the swing is large, and its distance is usually given in AU." },
-  { id: "parallax-compare", category: CATEGORIES.parallax, tier: 3, title: "Line or Wobble?",
-    story: "A star drifting in a straight line and a far planet wobbling with Earth's orbit can look alike over a few nights. Over months they do not.",
-    targetType: "section", target: { kind: "section", hash: "#planet-lab" },
-    objective: "Select a candidate and press Compare the motions of the selected candidate in the Planet X Lab.",
-    successFeedback: "Model comparison asks which explanation fits the positions best without overfitting. A parallax wobble that beats a straight line is evidence for something nearby, not proof." },
+  // ===================== Proper motion
+  M("proper-barnard", CATEGORIES.proper, 2, "The Runaway Star", "Barnard's Star is the fastest-moving star across our sky. Over a few years it slides visibly against the background.", B,
+    [PLAY, FIND, LIST, PICK, see("Read its speed in arcseconds per year.", "#mover-detail:not([hidden])")],
+    "Proper motion is a star's sideways drift. Barnard's Star moves about 10 arcseconds a year (from memory) because it is close, about 6 light-years away."),
+  M("proper-follow", CATEGORIES.proper, 1, "Ride Along", "Telescopes track their targets. You can too.", B,
+    [FIND, LIST, PICK, on("Press Follow it.", "#mover-follow-btn"), PLAY],
+    "Following keeps the mover centred while the background streams past."),
+  M("proper-track", CATEGORIES.proper, 2, "Draw the Path", "A moving star leaves a predictable line across the images.", B,
+    [on("Turn on the track layer.", "#show-track"), FIND, LIST, PICK],
+    "The track is the fitted straight path. Dots that wander off it mean the motion is not straight, or they are not the same object."),
+  M("proper-spectrum", CATEGORIES.proper, 3, "Colours of a Wanderer", "SPHEREx sees the sky in over a hundred infrared colours. A moving star carries its colour with it.", B,
+    [FIND, LIST, PICK, on("Press Spectrum along its path.", "#mover-spectrum-btn")],
+    "A spectrum is brightness against wavelength. Cool red dwarfs are brighter in the infrared; asteroids reflect sunlight and look different."),
+  M("proper-all-detectors", CATEGORIES.proper, 3, "Six Eyes Agree", "A real star moves the same way in every detector. A glitch does not.", B,
+    [on("Tick 'all detectors' next to the search buttons.", "#movers-all-det"), FIND, LIST],
+    "Agreement between independent detectors is strong evidence. Something seen in only one detector deserves suspicion."),
+  M("proper-explain", CATEGORIES.proper, 2, "Ask Why", "A good scientist can explain every claim with a number.", at("#assistant"),
+    [FIND, LIST, PICK, on("Press Why is it a candidate?", '#assistant [data-kind="why"]'), on("Press the 'what could be wrong' button.", '#assistant [data-kind="wrong"]')],
+    "Each sentence cites a measured value. Asking what could be wrong matters as much as asking why it is right."),
 
-  // ---------- 4. deep infrared / Planet X
-  { id: "px-hidden-body", category: CATEGORIES.infrared, tier: 2, title: "The Ninth Shadow",
-    story: "Some astronomers suspect a large planet far beyond Neptune. It would be cold, dim and slow. The demo hides a simulated one for you to find.",
-    targetType: "demo", target: { kind: "demo" },
-    objective: "On the synthetic demo, press Look for a distant body and find the simulated body.",
-    successFeedback: "This body is synthetic, injected by the demo. A real distant planet would move only a few arcseconds per day and mostly show Earth's parallax swing." },
-  { id: "px-injection", category: CATEGORIES.infrared, tier: 3, title: "Could We Even See It?",
-    story: "Before searching for something, scientists ask: if it were there, would our method catch it?",
-    targetType: "section", target: { kind: "section", hash: "#planet-lab" },
-    objective: "In the Planet X Lab, run the detection-efficiency test (synthetic bodies added to the images).",
-    successFeedback: "Injection-recovery tests hide fake objects in real data and count how many are found. They measure the search; they never find anything themselves." },
-  { id: "px-why-infrared", category: CATEGORIES.infrared, tier: 1, title: "Warm in the Dark",
-    story: "A planet far from the Sun reflects almost no sunlight, but it still glows faintly from its own heat.",
-    targetType: "section", target: { kind: "section", hash: "#telescope" },
-    objective: "Read the section about the SPHEREx telescope and find the wavelength range it observes.",
-    successFeedback: "Cold objects emit mostly in the infrared. That is why infrared surveys like SPHEREx and WISE are used to look for cool dwarfs and distant bodies." },
-  { id: "px-sky-context", category: CATEGORIES.infrared, tier: 2, title: "Map the Neighbourhood",
-    story: "A candidate never lives alone. Check what else catalogues know about that patch of sky.",
-    targetType: "section", target: { kind: "section", hash: "#sky-explorer" },
-    objective: "Open the sky explorer for the current field and look at the catalogue layers.",
-    successFeedback: "Cross-matching with other surveys (Gaia, 2MASS, WISE) tells you whether a dot is a known star, a galaxy or something new." },
+  // ===================== Parallax & distance
+  M("parallax-demo-body", CATEGORIES.parallax, 2, "The Wobbling Wanderer", "Earth circles the Sun, so a nearby object seems to wobble once a year. Find the simulated one.", B,
+    [PX, DISTANT, LIST, PICK],
+    "Parallax is the apparent shift of a nearby object as Earth moves. Earth's orbit gives a baseline of 2 AU (1 AU ≈ 150 million km)."),
+  M("parallax-models", CATEGORIES.parallax, 3, "Line or Wobble?", "A straight drift and a parallax wobble look alike over a few nights. The numbers tell them apart.", B,
+    [PX, DISTANT, LIST, PICK, on("In the Planet X Lab, press Compare the motions.", "#lab-compare-btn")],
+    "Model comparison asks which explanation fits best without overfitting. A wobble that beats a straight line is evidence, not proof."),
+  M("parallax-distance", CATEGORIES.parallax, 2, "Ruler of the Stars", "Measure the swing, get the distance: the first rung of the cosmic distance ladder.", B,
+    [PX, DISTANT, LIST, PICK, see("Read the distance in AU in its description.", "#mover-detail:not([hidden])")],
+    "Distance in parsecs = 1 / parallax in arcseconds. Inside the Solar System the swing is large and distances are given in AU."),
+  M("parallax-solar-system", CATEGORIES.parallax, 1, "Where Is Everyone?", "See where the planets are, squeezed so you can see them all.", at("#solar-system"),
+    [on("Choose the Educational view.", 'input[name="ss-mode"][value="educational"]'), on("Change the date.", "#ss-date"), on("Press Play.", "#ss-play")],
+    "The educational view is not to scale: real distances are so large the inner planets would vanish next to Neptune's orbit."),
+  M("parallax-scale", CATEGORIES.parallax, 2, "Feel the Distance", "Switch to true scale and see how empty the Solar System is.", at("#solar-system"),
+    [on("Choose the Scientific (to scale) view.", 'input[name="ss-mode"][value="true"]'), on("Change the range shown.", "#ss-range"), on("Change the speed.", "#ss-speed")],
+    "Neptune is about 30 AU from the Sun. A planet at hundreds of AU would move only a few arcseconds per day."),
+  M("parallax-place-body", CATEGORIES.parallax, 3, "Place a Planet", "Put a hypothetical body on the map at a distance you choose.", at("#solar-system"),
+    [on("Type a name for your body.", "#ss-body"), on("Set its distance.", "#ss-distance")],
+    "Farther bodies trace smaller yearly parallax loops: the wobble shrinks as distance grows."),
 
-  // ---------- 5. method
-  { id: "method-explain", category: CATEGORIES.method, tier: 1, title: "Ask Why",
-    story: "A good scientist can explain every claim with a number.",
-    targetType: "section", target: { kind: "section", hash: "#assistant" },
-    objective: "Select a candidate and press Why is it a candidate?",
-    successFeedback: "Each sentence of the explanation cites a measured value. If a claim cannot be traced to a number, it should not be made." },
-  { id: "method-tables", category: CATEGORIES.method, tier: 1, title: "No Picture Needed",
-    story: "Science is also tables. Some readers use a screen reader; others want to check the numbers.",
-    targetType: "section", target: { kind: "section", hash: "#text-analysis" },
-    objective: "Open Text analysis and save the candidates table as CSV.",
-    successFeedback: "The CSV starts by saying whether the data are real or synthetic. Labelling data honestly is the first rule of this project." },
-  { id: "method-bundle", category: CATEGORIES.method, tier: 3, title: "Prove It",
-    story: "Claims of discovery need proof that others can check without trusting you.",
-    targetType: "section", target: { kind: "section", hash: "#text-analysis" },
-    objective: "Save a provenance bundle and find the SHA-256 hash of an image inside it.",
-    successFeedback: "A hash is a fingerprint: change one pixel and it changes completely. It proves which data you used without publishing the pixels." },
-  { id: "method-pin", category: CATEGORIES.method, tier: 2, title: "Report to the Board",
-    story: "Observers share leads so others can confirm them, like drivers reporting a hazard on the road.",
-    targetType: "section", target: { kind: "section", hash: "#pin-board" },
-    objective: "Select a mover and pin it to the Discovery Pin Board with your observer name.",
-    successFeedback: "A pin is a report, not a discovery: it records who saw what, where and when, so someone else can check it." },
+  // ===================== Deep infrared / Planet X
+  M("px-hidden-body", CATEGORIES.infrared, 2, "The Ninth Shadow", "Some astronomers suspect a large planet far beyond Neptune: cold, dim and slow. The demo hides a simulated one.", B,
+    [PX, on("Choose the Difference view.", '#mode-switch input[value="diff"]'), DISTANT, LIST],
+    "This body is synthetic. A real distant planet would move a few arcseconds per day and mostly show Earth's parallax swing."),
+  M("px-injection", CATEGORIES.infrared, 3, "Could We Even See It?", "Before searching, scientists ask: if it were there, would our method catch it?", at("#planet-lab"),
+    [on("Choose the number of trials.", "#lab-trials"), on("Press Run the injection test.", "#lab-run-btn")],
+    "Injection tests hide fake objects in the images and count how many are found. They measure the search; they never find anything."),
+  M("px-injection-map", CATEGORIES.infrared, 3, "Map of Blind Spots", "Which distances and brightnesses can this search reach?", at("#planet-lab"),
+    [on("Edit the list of distances.", "#lab-distances"), on("Edit the list of fluxes.", "#lab-fluxes"), on("Press Run the injection test.", "#lab-run-btn"), on("Save the map as CSV.", "#lab-csv-btn")],
+    "A completeness map shows where a search is blind. 'Not found' means something only where the map says it could have been seen."),
+  M("px-wavelengths", CATEGORIES.infrared, 2, "Choose Your Colours", "Every SPHEREx image has its own wavelength. Keep only the ones you care about.", B,
+    [on("Set the minimum wavelength on the timeline.", "#tl-wl-min"), on("Set the maximum wavelength.", "#tl-wl-max"), on("Press Show all.", "#tl-reset")],
+    "Cold objects glow mostly at long infrared wavelengths. The band you keep changes what the eye and the search use."),
+  M("px-measure", CATEGORIES.infrared, 3, "Read the Light", "Brightness against wavelength: the fingerprint of an object.", B,
+    [on("Choose a detector for the measurements.", "#measurement-detector"), on("Show the errors as a band.", 'input[name="measure-style"][value="band"]'), on("Export the visible measurements.", "#download-measurements")],
+    "Every measurement has an error. A difference smaller than the error bars is not a real difference."),
+
+  // ===================== Sky & catalogues
+  M("sky-map", CATEGORIES.sky, 1, "Open the Atlas", "See your field inside an all-sky atlas built from other surveys.", at("#sky-explorer"),
+    [on("Choose a survey.", "#survey-select"), on("Press Show sky map.", "#aladin-btn")],
+    "Atlases like 2MASS, AllWISE and DSS show the same place at other wavelengths and dates."),
+  M("sky-catalogue-layer", CATEGORIES.sky, 1, "Known Neighbours", "Mark the stars that catalogues already know.", B,
+    [on("Turn on the catalogue layer.", "#show-catalogue")],
+    "A candidate sitting on a known star is usually that star, not something new."),
+  M("sky-check-mover", CATEGORIES.sky, 2, "Second Opinion", "Check a candidate in the sky map before believing it.", B,
+    [FIND, LIST, PICK, on("Press Check in sky map.", "#mover-map-btn")],
+    "Looking at the same position in other surveys quickly tells a known star or galaxy from a new object."),
+  M("sky-irsa", CATEGORIES.sky, 3, "Ask the Archive", "Search NASA's IRSA archive for every SPHEREx image of a place.", at("#sky-explorer"),
+    [on("Press Use the field on screen.", "#survey-field-btn"), on("Choose a search radius.", "#survey-radius"), on("Press Search IRSA.", "#survey-btn")],
+    "IRSA is NASA's infrared archive. How many images exist, and when, decides whether motion can be measured at all."),
+  M("sky-footprints", CATEGORIES.sky, 2, "Where Has SPHEREx Looked?", "SPHEREx scans the whole sky. See which patches it covered here.", at("#sky-explorer"),
+    [on("Press Read the footprints.", "#sky-refresh-btn")],
+    "A footprint is the outline of one image on the sky. Overlaps from different dates make a blink possible."),
+
+  // ===================== Data & sharing
+  M("data-tables", CATEGORIES.data, 1, "No Picture Needed", "Science is also tables: for screen readers, and for anyone who checks a number.", at("#text-analysis"),
+    [on("Press Build the text analysis.", "#ta-build-btn"), on("Save the images table (CSV).", "#ta-frames-csv")],
+    "Every CSV first says whether the data are real or synthetic. Labelling data honestly is this project's first rule."),
+  M("data-candidates-csv", CATEGORIES.data, 2, "Your Candidate List", "Save what the search found to analyse it elsewhere.", B,
+    [FIND, LIST, on("Press Save list (CSV).", "#export-csv-btn")],
+    "The list holds position, motion, significance and the checks of each candidate, plus a link back to this view."),
+  M("data-bundle", CATEGORIES.data, 3, "Prove It", "Claims need proof others can check without trusting you.", at("#text-analysis"),
+    [on("Press Save the bundle (JSON).", "#bundle-btn")],
+    "The bundle holds a SHA-256 hash of every image: change one pixel and the hash changes. It proves which data you used without publishing pixels."),
+  M("data-share", CATEGORIES.data, 1, "Send It to a Friend", "Share exactly what you are looking at.", B,
+    [on("Press Copy link.", "#copy-link-btn"), on("Press Embed code.", "#copy-embed-btn")],
+    "The link holds the field, detector and view, so anyone opening it sees the same thing."),
+  M("data-snapshot", CATEGORIES.data, 2, "Photo for the Logbook", "Keep a picture or a video of what you saw.", B,
+    [on("Save the picture (PNG).", "#save-png-btn"), on("Press Record video.", "#record-btn")],
+    "Saved pictures carry a label saying what the data are, so a synthetic image is never mistaken for an observation."),
+
+  // ===================== Pro lab
+  M("pro-pin", CATEGORIES.pro, 2, "Report to the Board", "Observers share leads so others can confirm them, like drivers reporting a hazard on the road.", at("#pin-board"),
+    [FIND, LIST, PICK, on("Press 📌 Pin & Report Object (Waze Style).", "#pin-report-btn"), see("Type your observer name and press Pin it.", "#pin-list .pin-item")],
+    "A pin records who saw what, where and when, with a SHA-256 hash, so someone else can check it. Until others confirm it, it is still a candidate."),
+  M("pro-pin-distant", CATEGORIES.pro, 3, "Flag the Shadow", "Report the simulated distant body on the pin board.", at("#pin-board"),
+    [PX, DISTANT, LIST, PICK, on("Press 📌 Pin & Report Object (Waze Style).", "#pin-report-btn")],
+    "Pins made on demo data are marked synthetic. Honest labels make a shared board trustworthy."),
 ]);
 
-/** Pick a mission at random. `rng` returns [0,1) (Math.random by default); `avoidIds` are skipped when anything else is left (so a reload rarely repeats). */
+/** Pick a mission at random. `rng` returns [0,1) (Math.random by default); `avoidIds` are skipped when anything else is left. */
 export function pickRandomMission(rng = Math.random, avoidIds = [], db = missionsDatabase) {
   if (!db.length) return null;
   const avoid = new Set(avoidIds);
@@ -134,20 +220,28 @@ export function pickRandomMission(rng = Math.random, avoidIds = [], db = mission
   return from[Math.min(from.length - 1, Math.floor(rng() * from.length))];
 }
 
-/** The URL a mission opens, relative to index.html. Keeps ?data=api&api=… when the current page uses a backend. */
+export const findMission = (id) => missionsDatabase.find((m) => m.id === id) ?? null;
+
+/** The Science Mode URL that starts a mission. Keeps ?data=api&api=… and ?theme= from the current page. */
 export function missionHref(mission, currentSearch = "") {
-  const t = mission.target;
   const keep = new URLSearchParams(currentSearch);
   const p = new URLSearchParams();
   for (const k of ["data", "api", "theme"]) if (keep.has(k)) p.set(k, keep.get(k));
-  if (t.kind === "query") for (const [k, v] of new URLSearchParams(t.query)) p.set(k, v);
-  const qs = p.toString();
-  return `index.html${qs ? "?" + qs : "?mode=blink"}${t.kind === "section" ? t.hash : ""}`;
+  for (const [k, v] of new URLSearchParams(mission.start?.query || BARNARD)) p.set(k, v);
+  p.set("mission", mission.id);
+  return `index.html?${p}${mission.start?.hash ?? ""}`;
+}
+
+/** Does an event target satisfy an { on } check? A click on a <label> counts for its control. */
+export function stepMatches(check, target) {
+  if (!check?.on || !target?.closest) return false;
+  if (target.closest(check.on)) return true;
+  const label = target.closest("label");
+  return Boolean(label?.control?.matches?.(check.on));
 }
 
 const KEY = "spherex-blink-missions";
 
-/** Progress kept in the browser: { completed: [ids], recent: [ids] }. `storage` is a localStorage-like object; any failure gives empty progress. */
 export function loadProgress(storage) {
   try {
     const p = JSON.parse(storage?.getItem(KEY) || "{}");

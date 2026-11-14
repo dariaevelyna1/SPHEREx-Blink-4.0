@@ -1,7 +1,7 @@
 // Tests for features/missions.js and features/pinBoard.js.   Run: node scratch/test_missions_pins.mjs
 import { webcrypto } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { missionsDatabase, pickRandomMission, missionHref, loadProgress, saveProgress, markComplete, noteShown } from "../frontend/js/features/missions.js";
+import { missionsDatabase, pickRandomMission, missionHref, loadProgress, saveProgress, markComplete, noteShown, stepMatches } from "../frontend/js/features/missions.js";
 import { cleanObserver, makePin, verifyPin, pinTag, addPin, removePin, loadPins, savePins, skyToMap, sha256Hex } from "../frontend/js/features/pinBoard.js";
 
 let failed = 0;
@@ -14,15 +14,23 @@ const keys = ["id", "category", "title", "story", "targetType", "objective", "su
 check("at least 15 missions, every one with all fields", missionsDatabase.length >= 15 && missionsDatabase.every((m) => keys.every((k) => typeof m[k] === "string" && m[k])));
 check("ids unique", new Set(missionsDatabase.map((m) => m.id)).size === missionsDatabase.length);
 check("at least 4 categories", new Set(missionsDatabase.map((m) => m.category)).size >= 4);
-const hashes = missionsDatabase.filter((m) => m.target.kind === "section").map((m) => m.target.hash);
-check("every section a mission points to exists in index.html", hashes.every((h) => html.includes(`id="${h.slice(1)}"`)), hashes.filter((h) => !html.includes(`id="${h.slice(1)}"`)).join(","));
+check("at least 40 practical missions, each with steps", missionsDatabase.length >= 40 && missionsDatabase.every((m) => m.steps.length >= 1 && m.steps.every((s) => s.does && (s.check.on || s.check.see))));
+const ids = new Set([...html.matchAll(/id="([^"]+)"/g)].map((x) => x[1]));
+const missing = [];
+for (const m of missionsDatabase) {
+  if (m.start.hash && !ids.has(m.start.hash.slice(1))) missing.push(m.id + " " + m.start.hash);
+  for (const s of m.steps) for (const sel of (s.check.on || s.check.see).split(",")) { const first = sel.trim().match(/^#([\w-]+)/); if (first && !ids.has(first[1])) missing.push(m.id + " " + sel); }
+}
+check("every control a step points to exists in Science Mode", missing.length === 0, missing.join("; "));
+const fake = (matches, label) => ({ closest: (s) => (s === "label" ? label : matches(s) ? {} : null) });
+check("step check: a click on the control, or on its label", stepMatches({ on: "#a" }, fake((s) => s === "#a")) && stepMatches({ on: "#r" }, fake(() => false, { control: { matches: (s) => s === "#r" } })) && !stepMatches({ on: "#a" }, fake(() => false)));
 check("random pick uses the rng", pickRandomMission(() => 0).id === missionsDatabase[0].id && pickRandomMission(() => 0.9999).id === missionsDatabase.at(-1).id);
 check("random pick avoids recent ones", pickRandomMission(() => 0, [missionsDatabase[0].id]).id === missionsDatabase[1].id);
 check("random pick falls back when all avoided", Boolean(pickRandomMission(Math.random, missionsDatabase.map((m) => m.id))));
 const seen = new Set(); for (let i = 0; i < 2000; i++) seen.add(pickRandomMission().id);
 check("Math.random reaches every mission", seen.size === missionsDatabase.length);
 const barn = missionsDatabase.find((m) => m.id === "proper-barnard");
-check("mission href keeps the backend", missionHref(barn, "?data=api&api=http://localhost:8003&ra=1") === "index.html?data=api&api=http%3A%2F%2Flocalhost%3A8003&ra=269.4462&dec=4.769&fov=5&det=D2");
+check("mission href keeps the backend and names the mission", missionHref(barn, "?data=api&api=http://localhost:8003&ra=1") === "index.html?data=api&api=http%3A%2F%2Flocalhost%3A8003&ra=269.4462&dec=4.769&fov=5&det=D2&mission=proper-barnard");
 const st = mem(); let pr = loadProgress(st);
 pr = markComplete(markComplete(pr, "blink-first-look"), "blink-first-look"); pr = noteShown(pr, "px-injection"); saveProgress(st, pr);
 check("progress round-trips and counts once", JSON.stringify(loadProgress(st)) === JSON.stringify({ completed: ["blink-first-look"], recent: ["px-injection"] }));

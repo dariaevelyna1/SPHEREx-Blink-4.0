@@ -1385,3 +1385,22 @@ html[data-theme] .site-footer { border-top: 1px solid var(--border); background:
 .pin-dialog { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); max-width: min(420px, calc(100vw - 32px)); }
 .pin-dialog input { width: 100%; box-sizing: border-box; padding: 6px 8px; background: var(--field); color: var(--text); border: 1px solid var(--control-border); border-radius: 6px; }
 #pin-name-error { color: var(--danger); }
+.mission-steps { margin: 6px 0 10px; padding-left: 1.4em; }
+.mission-catalogue details { border-top: 1px solid var(--border); padding: 6px 0; }
+.mission-catalogue summary { cursor: pointer; font-weight: 600; }
+.mission-catalogue ul { margin: 6px 0; padding-left: 1.2em; }
+.mission-runner { position: fixed; right: 16px; bottom: 16px; z-index: 1000; width: min(360px, calc(100vw - 32px)); max-height: 60vh; overflow: auto;
+  background: var(--surface); color: var(--text); border: 2px solid var(--accent); border-radius: var(--radius); box-shadow: var(--shadow); padding: 12px 14px; }
+.mission-runner h2 { margin: 0 0 6px; font-size: 1.1rem; }
+.mission-runner-kicker { margin: 0; font-size: .75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+.mission-runner-story { font-size: .9rem; color: var(--text-muted); }
+.mission-runner .mission-steps { list-style: none; padding: 0; }
+.mission-runner .mission-steps li { padding: 4px 0; color: var(--text-faint); }
+.mission-runner .mission-steps li span { display: inline-block; min-width: 1.4em; font-weight: 700; }
+.mission-runner .mission-steps li.is-current { color: var(--text); font-weight: 600; }
+.mission-runner .mission-steps li.is-done { color: var(--success); }
+.mission-runner-win { border-left: 3px solid var(--success); padding-left: 10px; }
+.mission-runner-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; }
+.mission-target { outline: 3px solid var(--accent) !important; outline-offset: 3px; border-radius: 6px; animation: mission-pulse 1.4s ease-in-out infinite; }
+@keyframes mission-pulse { 50% { outline-color: transparent; } }
+@media (prefers-reduced-motion: reduce) { .mission-target { animation: none; } }

@@ -170,5 +170,5 @@ A candidate is a lead with its evidence, never a discovery. Nothing this applica
 
 ## Missions and the pin board
 
-- Mission texts (Barnard's Star at about 10″/yr and 6 light-years, 1 AU ≈ 150 million km, d[pc] = 1/p[″], infrared and cold bodies) are textbook facts **written from memory**, not measured here. Mission completion is self-reported ("I did it"), not checked.
+- Mission texts (Barnard's Star at about 10″/yr and 6 light-years, 1 AU ≈ 150 million km, d[pc] = 1/p[″], infrared and cold bodies) are textbook facts **written from memory**, not measured here. Mission completion is detected from the learner's clicks and from results appearing on the page; it shows the learner used the tool, not that they understood it.
 - The pin tag reads "Discovered/Verified by <name>" at the author's request (14 Nov 2026). Scientifically a pin is still a candidate: the board says so, nothing is checked by anyone else, and synthetic-data pins say "(synthetic demo data)". Pins live in one browser's localStorage; nothing is shared between computers. The SHA-256 shows a pin was not edited afterwards in that browser; it is not a timestamped proof of priority (no outside witness).

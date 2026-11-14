@@ -23,24 +23,26 @@
       <section id="lesson-panel" class="lesson-panel" aria-labelledby="lesson-title" aria-live="polite" aria-atomic="false"><p>Loading your first mission…</p></section>
     </div>
 
-    <!-- ============ Cosmic Missions (features/missions.js, missionsPinView.js) ============ -->
+    <!-- ============ Cosmic Missions (features/missions.js, missionsPinView.js; run in Science Mode by missionRunner.js) ============ -->
     <section class="learn-section panel missions" id="missions" aria-labelledby="missions-title">
-      <h2 id="missions-title">Cosmic Missions</h2>
-      <p class="muted">A random mission each visit: short tasks that teach the blink method, proper motion, parallax and the search for a distant planet with the tools on this page. Progress is kept in this browser only.</p>
+      <div class="section-heading"><p class="learn-kicker">Hands-on training</p><h2 id="missions-title">🚀 Cosmic Missions</h2>
+      <p>Practical missions that teach you the platform by using it. Start a mission and Science Mode opens with your steps on screen; each step ticks itself when you really do it. A new random mission every visit. Progress stays on this device. The demo field is synthetic.</p></div>
       <article class="mission-card" id="mission-card" aria-live="polite">
         <p class="muted small" id="mission-category"></p>
         <h3 id="mission-title"></h3>
         <p id="mission-story"></p>
-        <p><strong>Objective:</strong> <span id="mission-objective"></span></p>
+        <p><strong>Your steps:</strong></p>
+        <ol id="mission-steps-preview" class="mission-steps"></ol>
         <p class="mission-feedback" id="mission-feedback" hidden></p>
         <p class="mission-actions">
-          <a class="btn btn-small" id="mission-go" href="#"></a>
-          <button type="button" class="btn btn-small btn-primary" id="mission-done-btn">I did it</button>
-          <button type="button" class="btn btn-small" id="mission-random-btn">Load random mission</button>
+          <a class="learn-button learn-button-primary" id="mission-go" href="#">🚀 Start this mission</a>
+          <button type="button" class="learn-button" id="mission-random-btn">🎲 Load random mission</button>
         </p>
       </article>
-      <p class="small"><span id="cm-progress"></span> <progress id="cm-progress-bar" value="0" max="1"></progress>
-        <button type="button" class="btn btn-small" id="mission-reset-btn">Reset progress</button></p>
+      <p class="small"><strong id="cm-progress"></strong> <progress id="cm-progress-bar" value="0" max="1"></progress>
+        <button type="button" class="text-button" id="mission-reset-btn">Reset progress</button></p>
+      <h3>All missions</h3>
+      <div id="mission-catalogue" class="mission-catalogue"></div>
     </section>
 
     <section class="learn-section astra-section" aria-labelledby="astra-title">

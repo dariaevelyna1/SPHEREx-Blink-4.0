@@ -7,31 +7,54 @@ const $ = (id) => document.getElementById(id);
 const store = (() => { try { return window.localStorage; } catch { return null; } })();
 const fmt = (x, d) => (Number.isFinite(x) ? x.toFixed(d) : "–");
 
-/** The mission card. A new random mission on every load and on "Load random mission". */
+/** The mission card in Learn Mode: a random practical mission on every visit and on "Load random mission", plus the whole catalogue. */
 export function setupMissions() {
   const card = $("mission-card");
   if (!card) return null;
   let progress = loadProgress(store);
   let current = null;
 
+  function renderCatalogue() {
+    const box = $("mission-catalogue");
+    if (!box) return;
+    const groups = new Map();
+    for (const m of missionsDatabase) (groups.get(m.category) ?? groups.set(m.category, []).get(m.category)).push(m);
+    box.textContent = "";
+    for (const [cat, list] of groups) {
+      const det = document.createElement("details");
+      const done = list.filter((m) => progress.completed.includes(m.id)).length;
+      const sum = document.createElement("summary"); sum.textContent = `${cat} · ${done}/${list.length}`;
+      const ul = document.createElement("ul");
+      for (const m of list) {
+        const li = document.createElement("li");
+        const a = document.createElement("a");
+        a.href = missionHref(m, location.search);
+        a.textContent = `${progress.completed.includes(m.id) ? "✓ " : ""}${m.title}`;
+        li.append(a, ` · level ${m.tier} · ${m.steps.length} steps`);
+        ul.appendChild(li);
+      }
+      det.append(sum, ul);
+      box.appendChild(det);
+    }
+  }
+
   function render() {
     const m = current;
     const done = progress.completed.includes(m.id);
-    $("mission-category").textContent = `${m.category} · level ${m.tier}`;
-    $("mission-title").textContent = m.title;
+    $("mission-category").textContent = `${m.category} · level ${m.tier} · ${m.steps.length} steps`;
+    $("mission-title").textContent = (done ? "✓ " : "") + m.title;
     $("mission-story").textContent = m.story;
-    $("mission-objective").textContent = m.objective;
+    const ol = $("mission-steps-preview");
+    ol.textContent = "";
+    for (const s of m.steps) { const li = document.createElement("li"); li.textContent = s.does; ol.appendChild(li); }
     $("mission-feedback").hidden = !done;
     $("mission-feedback").textContent = m.successFeedback;
-    $("mission-done-btn").disabled = done;
-    $("mission-done-btn").textContent = done ? "Completed ✓" : "I did it";
-    const href = missionHref(m, location.search);
-    const go = $("mission-go");
-    if (m.target.kind === "section") { go.href = href; go.textContent = "Open the tool in Science Mode"; }
-    else { go.href = href; go.textContent = m.target.kind === "demo" ? "Open the synthetic demo field" : "Load this field"; }
+    $("mission-go").href = missionHref(m, location.search);
+    $("mission-go").textContent = done ? "Play this mission again" : "🚀 Start this mission";
     $("cm-progress").textContent = `Missions completed: ${progress.completed.length} of ${missionsDatabase.length}`;
-    $("cm-progress-bar").value = progress.completed.length;
     $("cm-progress-bar").max = missionsDatabase.length;
+    $("cm-progress-bar").value = progress.completed.length;
+    renderCatalogue();
   }
 
   function loadRandom() {
@@ -42,12 +65,8 @@ export function setupMissions() {
   }
 
   $("mission-random-btn").addEventListener("click", loadRandom);
-  $("mission-done-btn").addEventListener("click", () => {
-    progress = markComplete(progress, current.id);
-    saveProgress(store, progress);
-    render();
-  });
   $("mission-reset-btn").addEventListener("click", () => {
+    if (!confirm("Reset your Cosmic Missions progress on this device?")) return;
     progress = { completed: [], recent: [] };
     saveProgress(store, progress);
     render();
