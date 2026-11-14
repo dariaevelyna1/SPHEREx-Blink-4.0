@@ -31,4 +31,16 @@ None shipped. The interface uses system fonts and shapes drawn with CSS or on a 
 
 | Library | Version | Licence | Use |
 |---|---|---|---|
-| (filled in as each dependency is added; pinned versions only) | | | |
+| FastAPI | 0.162.7 | MIT | Backend routes |
+| Uvicorn | 0.54.0 | BSD-3-Clause | Backend server |
+| Starlette | 1.10.0 (installed with FastAPI) | BSD-3-Clause | Middleware, test client |
+| Pydantic | 2.14.3 (installed with FastAPI) | MIT | Request validation inside FastAPI |
+| NumPy | 2.5.4 | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 | Scientific processing (offline) |
+| Astropy | 8.0.2 | BSD-3-Clause | FITS and WCS in scientific processing (offline). Cite as its authors ask: https://www.astropy.org/acknowledging.html |
+| google-cloud-storage | 3.17.1 | Apache-2.0 | The Google Cloud Storage store of the `full` profile |
+| pytest | 9.2.0 | MIT | Tests only |
+| httpx | 0.28.1 | BSD-3-Clause | Tests only (the test client) |
+
+Licences were read from the metadata of the installed packages on 2026-11-14 (`importlib.metadata`: `License-Expression`, or `License` and the
+classifiers for google-cloud-storage and httpx); the licence texts themselves were not opened. No JavaScript library is used: the frontend is our own
+ES modules, served as files.
