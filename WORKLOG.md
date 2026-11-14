@@ -1,4 +1,4 @@
-NEXT STEP: do P4 (index.html view chooser, tests/test_structure.mjs structural-difference test, tests/test_theme.mjs contrast/token test, CREDITS asset check, e2e + a11y run of both views).
+NEXT STEP: do P5 (submission draft: docs/SUBMISSION.md with project text, 30-second storyboard or 7-slide outline, AI-use declaration, pitch script and Q&A; README update).
 
 # WORKLOG: SPHEREx Blink 4.0
 
@@ -138,3 +138,21 @@ and 3.0's whole page layout, HTML and CSS (not allowed to be copied).
   navigation model is a sequence and not panels; Romanian was written now with the English (cheap, and part of local impact), ahead of P7.
 - WHAT REMAINS: the shared header badges are English in both languages (RO page shows "SYNTHETIC" in the header and "SINTETIC" on the picture);
   the worksheet (P7); scoring by time is not implemented (score = distance and tries only).
+
+## P4 View switch, badges, structural test, audits
+
+- 2026-11-14 (local). Status: DONE. Commit: "P4 view switch and structural test" (see `git log`).
+- WHAT: `frontend/index.html` + `js/shared/entry.js` (chooses the view: `?view=`, then remembered, then width < 900 px -> Learn; keeps the
+  deep-link parameters; two plain links without JS), `tests/test_structure.mjs`, `tests/test_theme.mjs`, README run line for macOS.
+  The header switch and both badges were already in both shells (P2/P3), driven by `siteHeader.js` and `contract.badgeModel`.
+- HOW: `test_structure.mjs` 23 checks and `test_theme.mjs` 45 checks pass; both were shown to FAIL on purpose (an `aside` added to learn.html;
+  `color: #fff` added to learn.css) and the files were restored from a copy (git status clean for them afterwards).
+  End-to-end run in the Claude browser pane (iframe driven by JS, 1300x800): `index.html?view=learn&seq=syn-b-d2` -> `learn.html?seq=syn-b-d2&step=1&lang=ro`;
+  `index.html?view=science&seq=syn-b-d2` -> `science.html?seq=syn-b-d2`; `science.html?seq=syn-c-d4&theme=paper` -> paper theme; every page:
+  badges `SYNTHETIC` + `edu · STATIC · ok`, one `h1`, one `main`, no duplicate ids, no control without an accessible name.
+  Failure path (P2): `?api=http://localhost:9` -> "backend · unreachable", NO DATA, nothing substituted.
+  NOT run: an automated accessibility engine (axe is not installed; no npm in this repo), a screen reader, keyboard-only walkthrough of
+  Learn, Firefox/Safari, the Playwright suite of 3.0 (not carried over).
+- WHY: a link between two documents (not a class toggle) is the switch, so the two structures cannot drift into one page; the tests read the
+  shells as text so they run in Node with no browser.
+- WHAT REMAINS: an axe run when a browser tool is available; header badges in Romanian.

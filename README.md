@@ -12,7 +12,7 @@ Status: under construction. `WORKLOG.md` says what is done, what was tested and 
 ## Run it
 
 ```bash
-py scripts/serve_frontend.py 8765
+py scripts/serve_frontend.py 8765      # Windows; on macOS/Linux: python3 scripts/serve_frontend.py 8765
 ```
 
 Then open `http://localhost:8765/` (`?view=science` or `?view=learn`). No build step, no install: vanilla ES modules.
