@@ -2,7 +2,7 @@
 import { webcrypto } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { missionsDatabase, pickRandomMission, missionHref, loadProgress, saveProgress, markComplete, noteShown, stepMatches, checkMeasurement, rankFor, totalXp } from "../frontend/js/features/missions.js";
-import { cleanObserver, makePin, verifyPin, pinTag, addPin, removePin, loadPins, savePins, skyToMap, sha256Hex } from "../frontend/js/features/pinBoard.js";
+import { canPin, cleanObserver, makePin, verifyPin, pinTag, addPin, removePin, loadPins, savePins, skyToMap, sha256Hex } from "../frontend/js/features/pinBoard.js";
 
 let failed = 0;
 const check = (name, ok, d = "") => { console.log(`${ok ? "PASS" : "FAIL"}  ${name}${d ? "  – " + d : ""}`); if (!ok) failed++; };
@@ -43,9 +43,12 @@ check("broken storage gives empty progress", loadProgress({ getItem: () => "{bad
 
 check("observer cleaned", cleanObserver("  Alex_Space99 <script> ") === "Alex_Space99 script" && cleanObserver("<>") === "");
 check("sha256 of 'abc'", (await sha256Hex("abc", webcrypto.subtle)) === "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
-const cand = { ra: 269.4462, dec: 4.769, label: "#1", speedArcsecPerYear: 10.14, nDet: 24, nFrames: 24, known: "Barnard's Star" };
+check("known objects cannot be pinned, unexplained ones can", !canPin({ ra: 1, dec: 1, known: "Barnard's Star" }).ok && canPin({ ra: 1, dec: 1 }).ok && !canPin(null).ok);
+let knownErr = ""; try { await makePin({ ra: 1, dec: 1, known: "Barnard's Star" }, { observer: "x", subtle: webcrypto.subtle }); } catch (e) { knownErr = e.message; }
+check("makePin refuses a known object", /known object/.test(knownErr));
+const cand = { ra: 269.4462, dec: 4.769, label: "#1", speedArcsecPerYear: 10.14, nDet: 24, nFrames: 24 };
 const pin = await makePin(cand, { observer: "Alex_Space99", realData: false, now: new Date("2026-11-14T10:00:00Z"), subtle: webcrypto.subtle });
-check("pin fields", pin.observer === "Alex_Space99" && pin.dataKind === "synthetic" && pin.foundAt === "2026-11-14T10:00:00.000Z" && /^[0-9a-f]{64}$/.test(pin.hash));
+check("pin fields", pin.observer === "Alex_Space99" && pin.dataKind === "synthetic" && pin.checks.knownObject === null && pin.foundAt === "2026-11-14T10:00:00.000Z" && /^[0-9a-f]{64}$/.test(pin.hash));
 check("tag text, marked synthetic", pinTag(pin) === "Discovered/Verified by Alex_Space99 (synthetic demo data)");
 check("hash verifies, and an edit breaks it", (await verifyPin(pin, webcrypto.subtle)) && !(await verifyPin({ ...pin, observer: "Mallory" }, webcrypto.subtle)));
 let threw = ""; try { await makePin(cand, { observer: "  ", subtle: webcrypto.subtle }); } catch (e) { threw = e.message; }

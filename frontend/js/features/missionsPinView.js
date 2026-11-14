@@ -1,7 +1,7 @@
 // missionsPinView.js – the DOM part of missions.js (the mission card) and pinBoard.js (the pin board with its sky map and the observer-name dialog).
 
 import { missionWhy, termsFor, categoryInfo, stepWhy, xpFor, missionsDatabase, pickRandomMission, missionHref, loadProgress, saveProgress, markComplete, noteShown } from "./missions.js";
-import { makePin, pinTag, loadPins, savePins, addPin, removePin, skyToMap, verifyPin, eclipticPoints, galacticToEquatorial, fieldOffsetArcmin, initials, timeAgo, decorativeStars } from "./pinBoard.js";
+import { makePin, pinTag, loadPins, savePins, addPin, removePin, skyToMap, verifyPin, eclipticPoints, galacticToEquatorial, fieldOffsetArcmin, initials, timeAgo, decorativeStars, canPin } from "./pinBoard.js";
 import { formatRA, formatDec } from "../coords.js";
 import { sharedConfig, fetchSharedPins, pushSharedPin, mergePins } from "./pinSync.js";
 import { PIN_BOARD_URL, PIN_BOARD_KEY } from "../config.js";
@@ -164,7 +164,10 @@ export function setupPinBoard({ getCandidate, getContext }) {
 
   let drawnField = "";
   function refresh() {
-    for (const b of pinBtns) b.disabled = !getCandidate();
+    const c = getCandidate(), allowed = canPin(c);
+    for (const b of pinBtns) { b.disabled = !allowed.ok; b.title = allowed.ok ? "Pin this candidate to the shared Discovery Pin Board under your observer name" : allowed.reason; }
+    const note = $("pin-known-note");
+    if (note) { note.hidden = !c || allowed.ok; note.textContent = c && !allowed.ok ? `📌 ${allowed.reason}` : ""; }
     const f = JSON.stringify(getContext().field);            // redraw when the field on screen changes ("you are here")
     if (f !== drawnField) { drawnField = f; render(); }
   }
@@ -384,7 +387,7 @@ export function setupPinBoard({ getCandidate, getContext }) {
 
   function openDialog() {
     const c = getCandidate();
-    if (!c) return;
+    if (!canPin(c).ok) return;
     const ctx = getContext();
     $("pin-preview").innerHTML = `<p class="pb-coords"><span>RA <b>${esc(formatRA(c.ra))}</b></span><span>Dec <b>${esc(formatDec(c.dec))}</b></span></p>
       <p class="pb-chips">${chips({ ...c, checks: { detections: c.nDet, images: c.nFrames, knownObject: c.known }, dataKind: ctx.realData ? "real" : "synthetic" })}</p>

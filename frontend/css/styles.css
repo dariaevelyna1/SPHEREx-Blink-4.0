@@ -1554,3 +1554,4 @@ html[data-theme] .site-footer { border-top: 1px solid var(--border); background:
   #project-menu.project-menu { gap: 8px; }
   #project-menu select { max-width: 9.5rem; }
 }
+.pin-known-note { margin: .5rem 0 0; padding: .55rem .75rem; border-radius: 10px; font-size: .86rem; border: 1px solid var(--warn); background: rgb(var(--warn-rgb) / .1); }

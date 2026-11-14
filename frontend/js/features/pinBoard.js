@@ -29,6 +29,8 @@ export async function sha256Hex(text, subtle = globalThis.crypto?.subtle) {
  * ctx: { observer, realData: boolean, field?: {ra,dec,fov,det}, now?: Date, subtle? }.
  */
 export async function makePin(candidate, ctx) {
+  const allowed = canPin(candidate);
+  if (!allowed.ok && candidate?.known) throw new Error(allowed.reason);
   const observer = cleanObserver(ctx.observer);
   if (!observer) throw new Error("Enter an observer name.");
   if (!Number.isFinite(candidate?.ra) || !Number.isFinite(candidate?.dec)) throw new Error("This candidate has no sky position to pin.");
@@ -131,4 +133,13 @@ export function galacticToEquatorial(l, b) {
   const sd = Math.sin(B) * Math.sin(dG) + Math.cos(B) * Math.cos(dG) * Math.cos(lN - L);
   const ra = (aG + Math.atan2(Math.cos(B) * Math.sin(lN - L), Math.sin(B) * Math.cos(dG) - Math.cos(B) * Math.sin(dG) * Math.cos(lN - L))) / d;
   return [((ra % 360) + 360) % 360, Math.asin(Math.max(-1, Math.min(1, sd))) / d];
+}
+
+/** May this candidate go on the board? Only objects nothing explains: a catalogued star or a known asteroid is not a find. */
+export function canPin(candidate) {
+  if (!candidate) return { ok: false, reason: "Select a candidate first." };
+  if (!Number.isFinite(candidate.ra) || !Number.isFinite(candidate.dec)) return { ok: false, reason: "This candidate has no sky position to pin." };
+  if (candidate.known) return { ok: false, reason: `This is ${candidate.known}, a known object, so it is not a new find and cannot be pinned. The board is for objects that nothing explains yet.` };
+  if (candidate.asteroid?.name || candidate.asteroidMatch?.name) return { ok: false, reason: `This matches the known asteroid ${candidate.asteroid?.name ?? candidate.asteroidMatch?.name}, so it cannot be pinned.` };
+  return { ok: true, reason: "" };
 }
