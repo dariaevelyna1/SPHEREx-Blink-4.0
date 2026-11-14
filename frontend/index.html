@@ -450,7 +450,7 @@
         <p class="pb-readout" id="pb-readout" aria-live="off">Move over the map to read RA and Dec. Zoom with + / − (or Ctrl + scroll), drag to move.</p>
         <div class="pb-popup" id="pin-popup" hidden></div>
       </div>
-      <p class="pb-sync small" id="pin-sync" role="status" aria-live="polite"></p>
+      <p class="pb-sync small"><span id="pin-sync" role="status" aria-live="polite"></span> <button type="button" class="btn btn-small" id="pin-refresh-btn">🔄 Refresh</button></p>
       <p class="pb-legend small"><span class="pb-key pb-key-real"></span> real data <span class="pb-key pb-key-syn"></span> synthetic demo <span class="pb-key pb-key-here"></span> field on screen <span class="pb-key pb-key-ecl"></span> ecliptic (planets' path) <span class="pb-key pb-key-mw"></span> Milky Way (galactic plane). Background stars are decorative; the Milky Way and the ecliptic are drawn at their real positions.</p>
       <p class="pb-empty" id="pin-empty">🛰️ No pins yet. Find movers, select one and pin it: it will appear here.</p>
       <ul class="pin-list" id="pin-list"></ul>

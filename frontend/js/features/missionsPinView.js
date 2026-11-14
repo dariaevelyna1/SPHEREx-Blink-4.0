@@ -305,7 +305,8 @@ export function setupPinBoard({ getCandidate, getContext }) {
     const observers = new Set(pins.map((p) => p.observer));
     $("pin-stats").innerHTML = `<span class="pb-stat"><b>${pins.length}</b> pin${pins.length === 1 ? "" : "s"}</span><span class="pb-stat"><b>${observers.size}</b> observer${observers.size === 1 ? "" : "s"}</span>`;
     $("pin-sync").textContent = syncText;
-    $("pin-sync").classList.toggle("is-bad", syncBad);
+    $("pin-sync").parentElement.classList.toggle("is-bad", syncBad);
+    $("pin-refresh-btn").hidden = !shared;
     $("pin-clear-btn").hidden = Boolean(shared);
     for (const p of pins) {
       const li = document.createElement("li");
@@ -417,8 +418,10 @@ export function setupPinBoard({ getCandidate, getContext }) {
   if (shared) {
     let started = false;
     const start = () => { if (started) return; started = true; sync(); setInterval(() => { if (!document.hidden) sync(); }, 60000); };
-    if ("IntersectionObserver" in window) new IntersectionObserver((entries, obs) => { if (entries.some((e) => e.isIntersecting)) { obs.disconnect(); start(); } }).observe($("pin-board"));
+    if (navigator.webdriver) syncText = "🌍 Shared board not loaded automatically in an automated browser (tests stay offline). Press Refresh to load it.";
+    else if ("IntersectionObserver" in window) new IntersectionObserver((entries, obs) => { if (entries.some((e) => e.isIntersecting)) { obs.disconnect(); start(); } }).observe($("pin-board"));
     else start();
+    $("pin-refresh-btn")?.addEventListener("click", () => { if (started) sync(); else start(); });
     for (const b of pinBtns) b.addEventListener("click", start);
   }
   return { refresh, render };

@@ -31,3 +31,5 @@ create policy "anyone can add a pin" on public.pins for insert with check (true)
 
 Checked on 14 Nov 2026: a read from the GitHub Pages origin answers 200; an insert with a malformed hash is refused (400, check constraint).
 Not checked: that an update or delete is refused (no test row was written, to keep the board clean).
+
+The page asks the shared board only once the pin board is on screen, and never by itself in an automated browser (`navigator.webdriver`), so the offline smoke test stays offline; the Refresh button loads it on demand.
