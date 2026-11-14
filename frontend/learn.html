@@ -7,21 +7,16 @@
   <link rel="stylesheet" href="css/styles.css?v=23"><link rel="stylesheet" href="css/instrument.css"><link rel="stylesheet" href="css/overview.css?v=2"><link rel="stylesheet" href="css/learn.css?v=1">
 </head>
 <body class="learn-page">
-  <a class="skip-link" href="#learn-main">Skip to your missions</a>
+  <a class="skip-link" href="#missions">Skip to your missions</a>
   <header class="site-header overview-header learn-header" id="top" data-page="learn">
     <a class="site-brand overview-brand" href="overview.html" aria-label="SPHEREx Blink home"><span class="brand-logo" aria-hidden="true"></span><span>SPHEREx Blink 4.0</span></a>
     <select id="theme-select" data-default-theme="nebula" aria-label="Colour theme"></select>
   </header>
   <main id="learn-main">
     <section class="learn-hero" aria-labelledby="learn-title">
-      <div><p class="learn-kicker">Your space adventure starts here</p><h1 id="learn-title">Learn Mode</h1><p>Eight short missions take you from invisible light to careful citizen science. No astronomy experience needed.</p><p class="synthetic-notice"><span aria-hidden="true">✦</span> <strong>SYNTHETIC DEMO</strong> — diagrams and example images on this page are illustrations, not SPHEREx observations.</p></div>
-      <aside class="learn-progress-card" aria-label="Your learning progress"><div class="progress-heading"><span>Mission progress</span><strong id="progress-label">0 of 8 complete</strong></div><progress id="mission-progress" max="100" value="0">0%</progress><p><strong id="xp-total">0 XP</strong><span id="rank-label">First Light Cadet</span></p><div class="streak-line"><span aria-hidden="true">🔥</span> <span id="streak-label">0 day streak</span><span class="streak-help">Learning streaks stay on this device.</span></div></aside>
+      <div><p class="learn-kicker">Your space adventure starts here</p><h1 id="learn-title">Learn Mode</h1><p>Hands-on missions teach you the whole platform by using it, step by step; eight short theory lessons explain the science behind it. No astronomy experience needed.</p><p class="synthetic-notice"><span aria-hidden="true">✦</span> <strong>SYNTHETIC DEMO</strong> — diagrams and example images on this page are illustrations, not SPHEREx observations.</p></div>
+      <aside class="learn-progress-card" aria-label="Your learning progress"><div class="progress-heading"><span>Theory lesson progress</span><strong id="progress-label">0 of 8 complete</strong></div><progress id="mission-progress" max="100" value="0">0%</progress><p><strong id="xp-total">0 XP</strong><span id="rank-label">First Light Cadet</span></p><div class="streak-line"><span aria-hidden="true">🔥</span> <span id="streak-label">0 day streak</span><span class="streak-help">Learning streaks stay on this device.</span></div></aside>
     </section>
-
-    <div class="learn-layout">
-      <aside class="path-card" aria-labelledby="path-title"><p class="learn-kicker">Learning path</p><h2 id="path-title">Your missions</h2><p class="path-hint">Finish a mission quiz to unlock the next level.</p><ol id="learning-path" class="learning-path" aria-label="Eight learning levels"></ol></aside>
-      <section id="lesson-panel" class="lesson-panel" aria-labelledby="lesson-title" aria-live="polite" aria-atomic="false"><p>Loading your first mission…</p></section>
-    </div>
 
     <!-- ============ Cosmic Missions (features/missions.js, missionsPinView.js; run in Science Mode by missionRunner.js) ============ -->
     <section class="learn-section panel missions" id="missions" aria-labelledby="missions-title">
@@ -44,6 +39,11 @@
       <h3>All missions</h3>
       <div id="mission-catalogue" class="mission-catalogue"></div>
     </section>
+
+    <div class="learn-layout">
+      <aside class="path-card" aria-labelledby="path-title"><p class="learn-kicker">Background reading</p><h2 id="path-title">Theory lessons</h2><p class="path-hint">Short readings with a quiz. The hands-on missions are above.</p><ol id="learning-path" class="learning-path" aria-label="Eight learning levels"></ol></aside>
+      <section id="lesson-panel" class="lesson-panel" aria-labelledby="lesson-title" aria-live="polite" aria-atomic="false"><p>Loading your first mission…</p></section>
+    </div>
 
     <section class="learn-section astra-section" aria-labelledby="astra-title">
       <div class="section-heading"><p class="learn-kicker">Your offline guide</p><h2 id="astra-title">🤖 Astra, your space guide</h2><p>Ask about a space topic, or choose a quick question. Astra uses prepared explanations on this page; it does not send your question to an AI service.</p></div>
