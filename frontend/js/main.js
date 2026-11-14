@@ -1247,7 +1247,23 @@ function showMovers({ candidates, stats, reason }, catalogueObjects = null, { di
         (m.support?.measurable ? ` · on its path in ${m.support.supported}/${m.support.measurable}` : "") +
         (m.blindCheck?.checked ? ` · blind check ${m.blindCheck.supported}/${m.blindCheck.checked}` : "") +
         (m.foundIn && hasSeveralDetectors() ? ` · found with ${m.foundIn === "all detectors" ? "all detectors together" : m.foundIn + " alone"}` : "") });
-    btn.append(rank, main, sub);
+    // the finder card: a verdict badge, a direction arrow (north up, east left, as on the picture) and two evidence bars
+    const verdict = m.known ? ["is-known", "🔎 Known object"] : m.distant ? ["is-distant", DATA_SOURCE === "api" ? "🪐 Distant-body candidate" : "🪐 Simulated distant body"] : ["is-new", "❓ Unexplained: check it"];
+    const badge = Object.assign(document.createElement("span"), { className: `mover-verdict ${verdict[0]}`, textContent: verdict[1] });
+    const arrow = document.createElement("span");
+    arrow.className = "mover-arrow";
+    arrow.setAttribute("aria-hidden", "true");
+    arrow.innerHTML = `<svg viewBox="-12 -12 24 24"><circle r="11"/><path d="M0 7V-7M-4 -3L0 -7L4 -3" transform="rotate(${(-(m.positionAngleDeg ?? 0)).toFixed(0)})"/></svg><b>${m.compass}</b>`;
+    const bar = (label, a, b) => {
+      const f = b ? Math.max(0, Math.min(1, a / b)) : 0;
+      return `<span class="mover-meter"><span class="mover-meter-label">${label} <b>${a}/${b}</b></span><span class="mover-meter-track"><span style="width:${(100 * f).toFixed(0)}%"></span></span></span>`;
+    };
+    const meters = document.createElement("span");
+    meters.className = "mover-meters";
+    meters.innerHTML = bar("seen in images", m.nDet, m.nFrames) + (m.support?.measurable ? bar("on its path", m.support.supported, m.support.measurable) : "");
+    const head = Object.assign(document.createElement("span"), { className: "mover-head" });
+    head.append(rank, badge, arrow);
+    btn.append(head, main, meters, sub);
     btn.addEventListener("click", () => selectMover(selectedMover === k ? -1 : k));
     li.append(btn);
     return li;
